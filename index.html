@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR" dir="ltr">
 <head>
@@ -147,9 +148,6 @@
             <div class="bg-gray-900 p-2 text-white flex justify-between items-center text-[10px] space-x-1 z-20">
               <button @click="abrirEditarProduto(prod)" class="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded font-bold transition flex items-center space-x-1">
                 <i class="fa-solid fa-pen-to-square"></i><span>Editar</span>
-              </button>
-              <button @click="abrirFaqProduto(prod)" class="bg-amber-600 hover:bg-amber-700 px-2 py-1 rounded font-bold transition flex items-center space-x-1">
-                <i class="fa-solid fa-comments"></i><span>FAQ Chat</span>
               </button>
               <button @click="excluirProduto(prod.id)" class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded font-bold transition flex items-center space-x-1">
                 <i class="fa-solid fa-trash"></i><span>Excluir</span>
@@ -431,14 +429,43 @@
               </div>
             </div>
 
-            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (LIGADO AO WORKER/D1) -->
+            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (LIGADO AO CLOUDFLARE D1) -->
             <div x-show="abaPainel === 'admin'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
                 <div>
                   <h3 class="font-bold text-gray-900 text-lg">Painel de Controle Administrador (Nuvem)</h3>
-                  <p class="text-xs text-gray-500">Alterações aqui salvam diretamente no banco de dados Cloudflare D1.</p>
+                  <p class="text-xs text-gray-500">Alterações salvam diretamente no banco de dados Cloudflare D1.</p>
                 </div>
                 <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Admin Supremo</span>
+              </div>
+
+              <!-- GESTÃO DO POP-UP (POPUPER) -->
+              <div class="bg-amber-50/60 p-4 rounded-2xl border border-amber-200 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-bold text-xs text-amber-900"><i class="fa-solid fa-bullhorn mr-2"></i>Pop-up Promocional (Pop-up)</h4>
+                  <label class="flex items-center space-x-2 text-xs font-semibold cursor-pointer">
+                    <input type="checkbox" x-model="config.popupAtivo" class="rounded text-rose-600">
+                    <span>Ativar Pop-up na Loja</span>
+                  </label>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Tag de Destaque</label>
+                    <input type="text" x-model="config.popupTag" placeholder="Oferta Especial" class="w-full p-2 border rounded-xl text-xs bg-white mt-1">
+                  </div>
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Título do Pop-up</label>
+                    <input type="text" x-model="config.popupTitulo" placeholder="Título" class="w-full p-2 border rounded-xl text-xs bg-white mt-1">
+                  </div>
+                </div>
+                <div>
+                  <label class="text-[10px] font-bold text-gray-600">URL da Imagem do Pop-up</label>
+                  <input type="text" x-model="config.popupImagem" placeholder="https://..." class="w-full p-2 border rounded-xl text-xs bg-white mt-1">
+                </div>
+                <div>
+                  <label class="text-[10px] font-bold text-gray-600">Texto Descritivo do Pop-up</label>
+                  <textarea x-model="config.popupTexto" placeholder="Texto..." class="w-full p-2 border rounded-xl text-xs bg-white h-16 mt-1"></textarea>
+                </div>
               </div>
 
               <!-- LOGO E IDENTIDADE -->
@@ -571,32 +598,19 @@
           freteToken: ''
         },
 
-        faqsPadrao: [
-          { pergunta: 'Qual o tecido / material?', resposta: 'Nossos produtos são confeccionados em tecidos nobres como moletinho premium e alfaiataria.' },
-          { pergunta: 'Tabela de Tamanhos', resposta: 'Trabalhamos com P (36/38), M (40), G (42) e GG (44).' },
-          { pergunta: 'Prazo de Entrega', resposta: 'Enviamos em até 24 horas úteis após a confirmação do pagamento.' }
-        ],
-
         produtoChat: null,
         mensagemChat: '',
         chatMensagens: [],
-
-        prodEditandoFaq: null,
-        novaFaqProd: { pergunta: '', resposta: '' },
         prodEmEdicao: null,
-        
         novoProd: { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' },
-
         paginaAtual: { titulo: '', imagem: '', descricao: '', link: '' },
         novaPagina: { titulo: '', imagem: '', descricao: '', link: '' },
         paginasAdmin: [],
-
         produtos: [],
         carrinho: [],
         metricasCliques: [],
 
         async init() {
-          // Carregar Sessão local
           const sessao = localStorage.getItem('dridalia_sessao');
           if (sessao) { try { this.usuario = JSON.parse(sessao); } catch(e) {} }
 
@@ -606,7 +620,6 @@
           const car = localStorage.getItem('dridalia_carrinho');
           if (car) { try { this.carrinho = JSON.parse(car); } catch(e) {} }
 
-          // Buscar Configurações e Produtos do Banco D1 via Cloudflare Worker
           try {
             const resConfig = await fetch(this.workerUrl + '/api/config');
             const dataConfig = await resConfig.json();
@@ -620,20 +633,8 @@
           try {
             const resProd = await fetch(this.workerUrl + '/api/produtos');
             const dataProd = await resProd.json();
-            if (Array.isArray(dataProd) && dataProd.length > 0) {
+            if (Array.isArray(dataProd)) {
               this.produtos = dataProd;
-            } else {
-              // Produto padrão caso o banco esteja vazio
-              this.produtos = [{
-                id: '1',
-                nome: 'Conjunto Tati Moletinho Premium',
-                preco: 189.90,
-                descricao: 'Conjunto de moletinho super macio e elegante.',
-                tamanhos: ['P', 'M', 'G', 'GG'],
-                cores: ['Rosa', 'Preto', 'Nude'],
-                imagens: ['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600'],
-                faqs: []
-              }];
             }
           } catch(err) {
             console.error('Erro ao carregar produtos da nuvem:', err);
@@ -642,14 +643,18 @@
 
         async salvarConfiguracoes() {
           try {
-            await fetch(this.workerUrl + '/api/config', {
+            const res = await fetch(this.workerUrl + '/api/config', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(this.config)
             });
-            alert('Configurações salvas com sucesso na nuvem!');
+            if (res.ok) {
+              alert('Configurações e Pop-up salvos com sucesso na nuvem!');
+            } else {
+              alert('Erro ao salvar no servidor.');
+            }
           } catch(err) {
-            alert('Erro ao salvar na nuvem: ' + err.message);
+            alert('Erro de conexão: ' + err.message);
           }
         },
 
@@ -670,25 +675,33 @@
           };
 
           try {
-            await fetch(this.workerUrl + '/api/produtos', {
+            const res = await fetch(this.workerUrl + '/api/produtos', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(novoObj)
             });
-            this.produtos.push(novoObj);
-            this.novoProd = { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' };
-            alert('Produto cadastrado com sucesso na nuvem!');
+            if (res.ok) {
+              this.produtos.push(novoObj);
+              this.novoProd = { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' };
+              alert('Produto cadastrado com sucesso na nuvem!');
+            } else {
+              alert('Erro ao salvar produto.');
+            }
           } catch(err) {
-            alert('Erro ao cadastrar produto: ' + err.message);
+            alert('Erro de conexão: ' + err.message);
           }
         },
 
         async excluirProduto(id) {
           if (confirm('Deseja excluir este produto da nuvem?')) {
             try {
-              await fetch(this.workerUrl + '/api/produtos/' + id, { method: 'DELETE' });
-              this.produtos = this.produtos.filter(p => p.id !== id);
-              alert('Produto excluído com sucesso!');
+              const res = await fetch(this.workerUrl + '/api/produtos/' + id, { method: 'DELETE' });
+              if (res.ok) {
+                this.produtos = this.produtos.filter(p => p.id !== id);
+                alert('Produto excluído com sucesso!');
+              } else {
+                alert('Erro ao excluir produto no servidor.');
+              }
             } catch(err) {
               alert('Erro ao excluir: ' + err.message);
             }
@@ -795,3 +808,4 @@
   </script>
 </body>
 </html>
+```
