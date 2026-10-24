@@ -254,7 +254,7 @@
           </div>
         </template>
 
-        <!-- ITENS DO PEDIDO (ESCOLHER QUANTIDADE) -->
+        <!-- ITENS DO PEDIDO -->
         <template x-for="(item, index) in carrinho" :key="index">
           <div class="flex items-center space-x-3 border-b pb-3">
             <img :src="item.imagens ? item.imagens[0] : item.imagem" class="w-16 h-16 object-cover rounded-xl border">
@@ -290,17 +290,17 @@
             </template>
           </div>
 
-          <!-- SE JÁ TIVER ENDEREÇO CADASTRADO (E NÃO ESTIVER EDITANDO) -->
+          <!-- SE JÁ TIVER ENDEREÇO CADASTRADO -->
           <template x-if="enderecoSalvo && !editandoEndereco">
             <div class="bg-white p-3 rounded-xl border text-xs space-y-1">
               <p class="font-bold text-gray-800" x-text="endereco.nomeCliente + ' (' + endereco.emailCliente + ')'"></p>
               <p class="text-gray-600" x-text="endereco.rua + ', ' + endereco.numero + ' - ' + endereco.bairro"></p>
               <p class="text-gray-600" x-text="endereco.cidade + '/' + endereco.estado + ' - CEP: ' + endereco.cep"></p>
-              <p class="text-emerald-600 font-bold text-[11px] pt-1"><i class="fa-solid fa-truck mr-1"></i>Frete Fixo / Calculado: R$ 15,00</p>
+              <p class="text-emerald-600 font-bold text-[11px] pt-1"><i class="fa-solid fa-truck mr-1"></i>Frete Calculado: R$ 15,00</p>
             </div>
           </template>
 
-          <!-- FORMULÁRIO DE ENDEREÇO (PRIMEIRA COMPRA OU ALTERAÇÃO) -->
+          <!-- FORMULÁRIO DE ENDEREÇO -->
           <div x-show="!enderecoSalvo || editandoEndereco" class="space-y-2">
             <div class="grid grid-cols-2 gap-2">
               <input type="text" x-model="endereco.nomeCliente" placeholder="Seu Nome Completo" class="p-2 border rounded-xl text-xs bg-white">
@@ -377,6 +377,7 @@
             <i class="fa-solid fa-sack-dollar mr-1.5 text-emerald-600"></i>Painel de Afiliado
           </button>
 
+          <!-- MENU ADMIN EXCLUSIVO (APENAS PARA O SEU E-MAIL) -->
           <template x-if="usuario.email === adminEmail">
             <button @click="abaPainel = 'admin'" :class="abaPainel === 'admin' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-rose-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
               <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Painel Admin (Dono)
@@ -488,15 +489,55 @@
               </div>
             </div>
 
+            <!-- PAINEL ADMIN COM MERCADO PAGO E FRETE RESTAURADOS -->
             <div x-show="abaPainel === 'admin'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
                 <div>
                   <h3 class="font-bold text-gray-900 text-lg">Painel de Controle Administrador</h3>
-                  <p class="text-xs text-gray-500">Gerencie produtos, integrações de frete e Mercado Pago.</p>
+                  <p class="text-xs text-gray-500">Gerencie produtos, chaves do Mercado Pago e APIs de Frete.</p>
                 </div>
                 <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Administrador Supremo</span>
               </div>
 
+              <!-- CONFIGURAÇÃO DO MERCADO PAGO -->
+              <div class="bg-rose-50/60 p-4 rounded-2xl border border-rose-200 space-y-4">
+                <h4 class="font-bold text-xs text-rose-900 flex items-center">
+                  <i class="fa-solid fa-credit-card text-rose-600 mr-2"></i>Configuração de Pagamento (Mercado Pago)
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Public Key (Mercado Pago)</label>
+                    <input type="text" x-model="config.mercadopagoPublicKey" placeholder="APP_USR-..." class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                  </div>
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Access Token (Mercado Pago)</label>
+                    <input type="password" x-model="config.mercadopagoAccessToken" placeholder="APP_USR-..." class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                  </div>
+                </div>
+              </div>
+
+              <!-- CONFIGURAÇÃO DE FRETE -->
+              <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-4">
+                <h4 class="font-bold text-xs text-blue-900 flex items-center">
+                  <i class="fa-solid fa-truck-fast text-blue-600 mr-2"></i>Integração de Fretes e Logística
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Plataforma de Frete Principal</label>
+                    <select x-model="config.freteEmpresa" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                      <option value="melhorenvio">Melhor Envio</option>
+                      <option value="frenet">Frenet API</option>
+                      <option value="correios">Correios Direct API</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Token da API de Frete</label>
+                    <input type="password" x-model="config.freteToken" placeholder="Cole o token da sua API" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                  </div>
+                </div>
+              </div>
+
+              <!-- GESTÃO DE PRODUTOS -->
               <div class="bg-gray-50 p-4 rounded-2xl border space-y-3">
                 <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-plus-circle text-emerald-600 mr-1.5"></i>Cadastrar Novo Produto (até 5 Imagens)</h4>
                 
@@ -518,7 +559,7 @@
                 <button @click="adicionarProduto()" class="w-full py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Cadastrar Produto</button>
               </div>
 
-              <button @click="salvarConfiguracoes()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition">Salvar Alterações da Loja</button>
+              <button @click="salvarConfiguracoes()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition">Salvar Alterações e Configurações da Loja</button>
             </div>
           </div>
         </template>
@@ -557,7 +598,6 @@
           vendasAfiliado: 0
         },
 
-        // GESTÃO DE ENDEREÇO / FRETE
         enderecoSalvo: false,
         editandoEndereco: false,
         valorFrete: 15.00,
@@ -579,7 +619,11 @@
           popupAtivo: true,
           popupTitulo: 'Oferta Especial de Boas-Vindas!',
           popupTexto: 'Use o cupom BEMVINDA e ganhe 10% de desconto no seu primeiro pedido.',
-          popupImagem: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600'
+          popupImagem: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600',
+          mercadopagoPublicKey: '',
+          mercadopagoAccessToken: '',
+          freteEmpresa: 'melhorenvio',
+          freteToken: ''
         },
 
         faqsPadrao: [
@@ -670,7 +714,6 @@
             return;
           }
 
-          // Se a pessoa ainda não tiver conta, abre automaticamente no nome dela
           if (!this.usuario.logado) {
             const codAfiliado = 'DRI-' + Math.random().toString(36).substring(2, 7).toUpperCase();
             this.usuario = {
@@ -837,7 +880,7 @@
 
         salvarConfiguracoes() {
           localStorage.setItem('dridalia_config', JSON.stringify(this.config));
-          alert('Configurações salvas com sucesso!');
+          alert('Configurações do Mercado Pago, Frete e Loja salvas com sucesso!');
         },
 
         falarTexto(texto) {
