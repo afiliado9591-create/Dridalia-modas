@@ -80,7 +80,7 @@
             <img :src="prod.imagens[imgAtiva] || prod.imagem" :alt="prod.nome" class="w-full h-full object-cover transition duration-500" loading="lazy">
             
             <!-- Botão de Ouvir Áudio da Descrição -->
-            <button @click="falarTexto(prod.nome + '. ' + prod.descricao)" class="absolute top-3 right-3 bg-rose-600 hover:bg-rose-700 text-white p-2.5 rounded-full shadow-lg backdrop-blur-md transition z-10 flex items-center space-x-1" title="Ouvir Descrição">
+            <button @click="falarTexto(prod.nome + '. ' + prod.descricao)" class="absolute top-3 right-3 bg-rose-600 hover:bg-rose-700 text-white p-2.5 rounded-full shadow-lg backdrop-blur-md transition z-10 flex items-center space-x-1" title="Ouvir Descrição em Áudio">
               <i class="fa-solid fa-volume-high text-xs"></i>
             </button>
 
@@ -113,7 +113,6 @@
           <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
             <div>
               <h2 class="font-bold text-gray-900 text-base line-clamp-1" x-text="prod.nome"></h2>
-              <p class="text-xs text-gray-500 mt-1 line-clamp-2" x-text="prod.descricao"></p>
             </div>
 
             <!-- OPÇÕES DE TAMANHO E COR NA VITRINE -->
@@ -146,7 +145,6 @@
                   <span>Dúvidas</span>
                 </button>
 
-                <!-- COMPRAR -> ADICIONA E ABRE CARRINHO NA HORA -->
                 <button @click="adicionarAoCarrinho(prod, corSel, tamSel)" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 shadow transition">
                   <i class="fa-solid fa-cart-plus"></i>
                   <span>Comprar</span>
@@ -160,9 +158,11 @@
     </div>
   </main>
 
-  <!-- MODAL DO CHATBOT DE DÚVIDAS DO PRODUTO -->
+  <!-- MODAL DO CHATBOT COM CARD DO PRODUTO DENTRO -->
   <div x-show="chatbotAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
-    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[580px]">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[620px]">
+      
+      <!-- Cabeçalho Chatbot -->
       <div class="p-4 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-full bg-rose-600 flex items-center justify-center text-white font-bold text-sm">
@@ -176,6 +176,31 @@
         <button @click="chatbotAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
 
+      <!-- CARD DO PRODUTO DENTRO DO CHATBOT -->
+      <template x-if="produtoChat">
+        <div class="bg-rose-50/50 p-3 border-b flex items-center space-x-3" x-data="{ corChat: produtoChat.cores[0], tamChat: produtoChat.tamanhos[0] }">
+          <img :src="produtoChat.imagens ? produtoChat.imagens[0] : produtoChat.imagem" class="w-16 h-16 object-cover rounded-xl border bg-white">
+          <div class="flex-1 min-w-0">
+            <h4 class="font-bold text-xs text-gray-900 truncate" x-text="produtoChat.nome"></h4>
+            <p class="text-xs font-black text-rose-600" x-text="'R$ ' + produtoChat.preco.toFixed(2)"></p>
+            
+            <div class="flex space-x-2 mt-1">
+              <select x-model="tamChat" class="text-[10px] p-1 border rounded bg-white font-semibold">
+                <template x-for="t in produtoChat.tamanhos" :key="t"><option :value="t" x-text="t"></option></template>
+              </select>
+              <select x-model="corChat" class="text-[10px] p-1 border rounded bg-white font-semibold">
+                <template x-for="c in produtoChat.cores" :key="c"><option :value="c" x-text="c"></option></template>
+              </select>
+            </div>
+          </div>
+          <button @click="adicionarAoCarrinho(produtoChat, corChat, tamChat); chatbotAberto = false;" class="px-3 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow transition whitespace-nowrap flex items-center space-x-1">
+            <i class="fa-solid fa-cart-plus"></i>
+            <span>Comprar</span>
+          </button>
+        </div>
+      </template>
+
+      <!-- Mensagens do Chat -->
       <div class="p-4 overflow-y-auto flex-1 space-y-3 bg-gray-50" id="chatContainer">
         <template x-for="(msg, i) in chatMensagens" :key="i">
           <div :class="msg.tipo === 'usuario' ? 'justify-end' : 'justify-start'" class="flex">
@@ -186,9 +211,9 @@
         </template>
       </div>
 
+      <!-- FAQs -->
       <div class="p-2.5 bg-white border-t space-y-2">
-        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block px-1">Perguntas Frequentes:</span>
-        <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+        <div class="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
           <template x-for="(faq, index) in faqsPadrao" :key="index">
             <button @click="selecionarFaq(faq)" class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-full font-medium transition">
               <span x-text="faq.pergunta"></span>
@@ -206,18 +231,22 @@
     </div>
   </div>
 
-  <!-- DRAWER DO CARRINHO / CHECKOUT DE COMPRA -->
+  <!-- DRAWER DO CARRINHO & CHECKOUT DE FRETE + PAGAMENTO -->
   <div x-show="carrinhoAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end" x-cloak>
     <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between">
-      <div class="p-5 border-b bg-gray-900 text-white flex justify-between items-center">
+      
+      <!-- Cabeçalho -->
+      <div class="p-4 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-bag-shopping text-rose-500 text-xl"></i>
-          <h3 class="font-bold text-lg">Seu Carrinho & Checkout</h3>
+          <h3 class="font-bold text-base">Seu Carrinho & Checkout</h3>
         </div>
         <button @click="carrinhoAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
 
-      <div class="p-5 overflow-y-auto flex-1 space-y-4">
+      <!-- Conteúdo de Itens e Endereço -->
+      <div class="p-4 overflow-y-auto flex-1 space-y-5">
+        
         <template x-if="carrinho.length === 0">
           <div class="text-center py-12 text-gray-400 space-y-3">
             <i class="fa-solid fa-basket-shopping text-4xl"></i>
@@ -225,19 +254,17 @@
           </div>
         </template>
 
+        <!-- ITENS DO PEDIDO (ESCOLHER QUANTIDADE) -->
         <template x-for="(item, index) in carrinho" :key="index">
           <div class="flex items-center space-x-3 border-b pb-3">
             <img :src="item.imagens ? item.imagens[0] : item.imagem" class="w-16 h-16 object-cover rounded-xl border">
             <div class="flex-1">
               <h4 class="font-bold text-xs text-gray-900" x-text="item.nome"></h4>
-              
-              <!-- Exibição de Tamanho e Cor escolhidos -->
-              <div class="flex space-x-2 mt-1 text-[10px] text-gray-500">
+              <div class="flex space-x-2 mt-0.5 text-[10px] text-gray-500">
                 <span>Tam: <strong class="text-gray-800" x-text="item.tamanho"></strong></span>
                 <span>•</span>
                 <span>Cor: <strong class="text-gray-800" x-text="item.cor"></strong></span>
               </div>
-
               <p class="text-xs font-bold text-rose-600 mt-1" x-text="'R$ ' + (item.preco * item.qtd).toFixed(2)"></p>
               
               <div class="flex items-center space-x-2 mt-2">
@@ -246,29 +273,80 @@
                 <button @click="alterarQtd(index, 1)" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-xs font-bold">+</button>
               </div>
             </div>
-
             <button @click="removerDoCarrinho(index)" class="text-gray-400 hover:text-red-500 p-2"><i class="fa-solid fa-trash-can text-sm"></i></button>
           </div>
         </template>
+
+        <!-- SEÇÃO DE ENDEREÇO E FRETE (ESTILO SHOPEE) -->
+        <div x-show="carrinho.length > 0" class="bg-gray-50 p-4 rounded-2xl border space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-xs text-gray-900 flex items-center">
+              <i class="fa-solid fa-location-dot text-rose-600 mr-1.5"></i>Endereço de Entrega
+            </h4>
+            <template x-if="enderecoSalvo">
+              <button @click="editandoEndereco = !editandoEndereco" class="text-[10px] text-rose-600 font-bold underline">
+                <span x-text="editandoEndereco ? 'Cancelar' : 'Alterar Endereço'"></span>
+              </button>
+            </template>
+          </div>
+
+          <!-- SE JÁ TIVER ENDEREÇO CADASTRADO (E NÃO ESTIVER EDITANDO) -->
+          <template x-if="enderecoSalvo && !editandoEndereco">
+            <div class="bg-white p-3 rounded-xl border text-xs space-y-1">
+              <p class="font-bold text-gray-800" x-text="endereco.nomeCliente + ' (' + endereco.emailCliente + ')'"></p>
+              <p class="text-gray-600" x-text="endereco.rua + ', ' + endereco.numero + ' - ' + endereco.bairro"></p>
+              <p class="text-gray-600" x-text="endereco.cidade + '/' + endereco.estado + ' - CEP: ' + endereco.cep"></p>
+              <p class="text-emerald-600 font-bold text-[11px] pt-1"><i class="fa-solid fa-truck mr-1"></i>Frete Fixo / Calculado: R$ 15,00</p>
+            </div>
+          </template>
+
+          <!-- FORMULÁRIO DE ENDEREÇO (PRIMEIRA COMPRA OU ALTERAÇÃO) -->
+          <div x-show="!enderecoSalvo || editandoEndereco" class="space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" x-model="endereco.nomeCliente" placeholder="Seu Nome Completo" class="p-2 border rounded-xl text-xs bg-white">
+              <input type="email" x-model="endereco.emailCliente" placeholder="Seu E-mail" class="p-2 border rounded-xl text-xs bg-white">
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <input type="text" x-model="endereco.cep" @keyup="buscarCep()" placeholder="CEP (00000-000)" class="p-2 border rounded-xl text-xs bg-white font-mono col-span-1">
+              <input type="text" x-model="endereco.rua" placeholder="Rua / Avenida" class="p-2 border rounded-xl text-xs bg-white col-span-2">
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <input type="text" x-model="endereco.numero" placeholder="Número" class="p-2 border rounded-xl text-xs bg-white">
+              <input type="text" x-model="endereco.bairro" placeholder="Bairro" class="p-2 border rounded-xl text-xs bg-white col-span-2">
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <input type="text" x-model="endereco.cidade" placeholder="Cidade" class="p-2 border rounded-xl text-xs bg-white col-span-2">
+              <input type="text" x-model="endereco.estado" placeholder="UF" class="p-2 border rounded-xl text-xs bg-white uppercase">
+            </div>
+            <button @click="salvarEndereco()" class="w-full py-2 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Confirmar Endereço</button>
+          </div>
+        </div>
+
       </div>
 
-      <div class="p-5 border-t bg-gray-50 space-y-3" x-show="carrinho.length > 0">
+      <!-- RODAPÉ DE CHECKOUT DE PAGAMENTO -->
+      <div class="p-4 border-t bg-gray-50 space-y-3" x-show="carrinho.length > 0">
         <div class="space-y-1.5 text-xs text-gray-600">
           <div class="flex justify-between">
             <span>Subtotal:</span>
             <span class="font-bold text-gray-900" x-text="'R$ ' + calcularSubtotal().toFixed(2)"></span>
           </div>
+          <div class="flex justify-between">
+            <span>Frete:</span>
+            <span class="font-bold text-emerald-600" x-text="valorFrete > 0 ? 'R$ ' + valorFrete.toFixed(2) : 'A calcular'"></span>
+          </div>
           <div class="flex justify-between items-center pt-1 border-t">
-            <span class="font-bold text-sm text-gray-900">Total:</span>
-            <span class="font-black text-lg text-rose-600" x-text="'R$ ' + calcularSubtotal().toFixed(2)"></span>
+            <span class="font-bold text-sm text-gray-900">Total Geral:</span>
+            <span class="font-black text-xl text-rose-600" x-text="'R$ ' + (calcularSubtotal() + valorFrete).toFixed(2)"></span>
           </div>
         </div>
 
         <button @click="finalizarCompra()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
           <i class="fa-solid fa-lock text-sm"></i>
-          <span>Finalizar Compra Segura</span>
+          <span>PAGAR AGORA (MERCADO PAGO)</span>
         </button>
       </div>
+
     </div>
   </div>
 
@@ -479,6 +557,21 @@
           vendasAfiliado: 0
         },
 
+        // GESTÃO DE ENDEREÇO / FRETE
+        enderecoSalvo: false,
+        editandoEndereco: false,
+        valorFrete: 15.00,
+        endereco: {
+          nomeCliente: '',
+          emailCliente: '',
+          cep: '',
+          rua: '',
+          numero: '',
+          bairro: '',
+          cidade: '',
+          estado: ''
+        },
+
         config: {
           nomeLoja: 'Dridalia Moda Feminina',
           logo: '',
@@ -486,11 +579,7 @@
           popupAtivo: true,
           popupTitulo: 'Oferta Especial de Boas-Vindas!',
           popupTexto: 'Use o cupom BEMVINDA e ganhe 10% de desconto no seu primeiro pedido.',
-          popupImagem: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600',
-          mercadopagoPublicKey: '',
-          mercadopagoAccessToken: '',
-          freteEmpresa: 'melhorenvio',
-          freteToken: ''
+          popupImagem: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600'
         },
 
         faqsPadrao: [
@@ -546,14 +635,58 @@
           const prods = localStorage.getItem('dridalia_produtos');
           if (prods) this.produtos = JSON.parse(prods);
 
-          const faqs = localStorage.getItem('dridalia_faqs');
-          if (faqs) this.faqsPadrao = JSON.parse(faqs);
-
           const sessao = localStorage.getItem('dridalia_sessao');
           if (sessao) this.usuario = JSON.parse(sessao);
 
+          const end = localStorage.getItem('dridalia_endereco');
+          if (end) {
+            this.endereco = JSON.parse(end);
+            this.enderecoSalvo = true;
+          }
+
           const car = localStorage.getItem('dridalia_carrinho');
           if (car) this.carrinho = JSON.parse(car);
+        },
+
+        buscarCep() {
+          let cepLimpo = this.endereco.cep.replace(/\D/g, '');
+          if (cepLimpo.length === 8) {
+            fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+              .then(res => res.json())
+              .then(data => {
+                if (!data.erro) {
+                  this.endereco.rua = data.logradouro;
+                  this.endereco.bairro = data.bairro;
+                  this.endereco.cidade = data.localidade;
+                  this.endereco.estado = data.uf;
+                }
+              });
+          }
+        },
+
+        salvarEndereco() {
+          if (!this.endereco.nomeCliente || !this.endereco.cep || !this.endereco.rua || !this.endereco.numero) {
+            alert('Por favor, preencha o nome, CEP, rua e número.');
+            return;
+          }
+
+          // Se a pessoa ainda não tiver conta, abre automaticamente no nome dela
+          if (!this.usuario.logado) {
+            const codAfiliado = 'DRI-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+            this.usuario = {
+              logado: true,
+              nome: this.endereco.nomeCliente,
+              email: this.endereco.emailCliente || 'cliente@dridalia.com',
+              codigoAfiliado: codAfiliado,
+              ganhosAfiliado: 0,
+              vendasAfiliado: 0
+            };
+            localStorage.setItem('dridalia_sessao', JSON.stringify(this.usuario));
+          }
+
+          localStorage.setItem('dridalia_endereco', JSON.stringify(this.endereco));
+          this.enderecoSalvo = true;
+          this.editandoEndereco = false;
         },
 
         abrirChatbot(prod) {
@@ -628,13 +761,6 @@
         },
 
         adicionarAoCarrinho(prod, cor, tamanho) {
-          if (!this.usuario.logado) {
-            alert('Para comprar na Dridalia, crie uma conta ou faça login primeiro.');
-            this.modoConta = 'cadastro';
-            this.painelAberto = true;
-            return;
-          }
-
           const index = this.carrinho.findIndex(item => item.id === prod.id && item.cor === cor && item.tamanho === tamanho);
           if (index > -1) {
             this.carrinho[index].qtd++;
@@ -643,7 +769,7 @@
           }
 
           this.salvarCarrinho();
-          this.carrinhoAberto = true; // ABRE O CARRINHO / CHECKOUT NA HORA
+          this.carrinhoAberto = true;
         },
 
         alterarQtd(index, valor) {
@@ -669,7 +795,11 @@
         },
 
         finalizarCompra() {
-          alert('Redirecionando para o Checkout com Mercado Pago e cálculo de frete...');
+          if (!this.enderecoSalvo) {
+            alert('Por favor, preencha o seu endereço de entrega antes de pagar.');
+            return;
+          }
+          alert('Redirecionando para a chave PIX / Mercado Pago seguro...');
         },
 
         compartilharProduto(prod) {
@@ -707,8 +837,7 @@
 
         salvarConfiguracoes() {
           localStorage.setItem('dridalia_config', JSON.stringify(this.config));
-          localStorage.setItem('dridalia_faqs', JSON.stringify(this.faqsPadrao));
-          alert('Configurações da loja salvas com sucesso!');
+          alert('Configurações salvas com sucesso!');
         },
 
         falarTexto(texto) {
