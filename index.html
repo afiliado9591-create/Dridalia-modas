@@ -43,11 +43,18 @@
   <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
       
-      <div class="flex items-center space-x-3 cursor-pointer" @click="painelAberto = false">
-        <template x-if="config.logo">
-          <img :src="config.logo" alt="Dridalia Logo" class="h-10 w-auto object-contain">
-        </template>
-        <h1 class="text-xl font-bold tracking-tight text-gray-900 font-grife" x-text="config.nomeLoja"></h1>
+      <div class="flex items-center space-x-3">
+        <!-- BOTÃO DE MENU DE TRÊS PAUZINHOS (HAMBÚRGUER) -->
+        <button @click="menuLateralAberto = true" class="p-2 text-gray-700 hover:text-rose-600 rounded-lg transition" title="Abrir Menu">
+          <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+
+        <div class="flex items-center space-x-3 cursor-pointer" @click="painelAberto = false">
+          <template x-if="config.logo">
+            <img :src="config.logo" alt="Dridalia Logo" class="h-10 w-auto object-contain">
+          </template>
+          <h1 class="text-xl font-bold tracking-tight text-gray-900 font-grife" x-text="config.nomeLoja"></h1>
+        </div>
       </div>
 
       <div class="flex items-center space-x-3 sm:space-x-4">
@@ -64,6 +71,64 @@
 
     </div>
   </header>
+
+  <!-- MENU LATERAL (GAVETA COM POLÍTICAS E PÁGINAS) -->
+  <div x-show="menuLateralAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-start" x-cloak>
+    <div class="bg-white w-full max-w-xs h-full shadow-2xl flex flex-col justify-between">
+      <div class="p-4 bg-gray-900 text-white flex justify-between items-center">
+        <h3 class="font-bold text-sm flex items-center"><i class="fa-solid fa-bars mr-2 text-rose-500"></i>Menu Institucional</h3>
+        <button @click="menuLateralAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <div class="p-4 overflow-y-auto flex-1 space-y-3">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Políticas da Loja</p>
+        <button @click="abrirPaginaInstitucional('privacidade')" class="w-full text-left p-3 hover:bg-rose-50 text-xs font-semibold text-gray-700 rounded-xl transition flex items-center space-x-2">
+          <i class="fa-solid fa-shield-halved text-rose-600"></i><span>Política de Privacidade</span>
+        </button>
+        <button @click="abrirPaginaInstitucional('entrega')" class="w-full text-left p-3 hover:bg-rose-50 text-xs font-semibold text-gray-700 rounded-xl transition flex items-center space-x-2">
+          <i class="fa-solid fa-truck text-rose-600"></i><span>Política de Frete e Entrega</span>
+        </button>
+        <button @click="abrirPaginaInstitucional('devolucao')" class="w-full text-left p-3 hover:bg-rose-50 text-xs font-semibold text-gray-700 rounded-xl transition flex items-center space-x-2">
+          <i class="fa-solid fa-rotate-left text-rose-600"></i><span>Política de Trocas e Devoluções</span>
+        </button>
+
+        <template x-if="paginasAdmin.length > 0">
+          <div class="pt-4 border-t space-y-2">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Páginas Especiais</p>
+            <template x-for="pag in paginasAdmin" :key="pag.id">
+              <button @click="abrirPaginaDinamica(pag)" class="w-full text-left p-3 hover:bg-gray-100 text-xs font-semibold text-gray-800 rounded-xl transition flex items-center space-x-2">
+                <i class="fa-solid fa-file-lines text-blue-600"></i><span x-text="pag.titulo"></span>
+              </button>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <div class="p-4 border-t bg-gray-50 text-center text-[10px] text-gray-500">
+        <p x-text="config.nomeLoja + ' © 2026'"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE VISUALIZAÇÃO DE PÁGINAS E POLÍTICAS -->
+  <div x-show="modalPaginaAberto" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div class="p-4 bg-gray-900 text-white flex justify-between items-center">
+        <h3 class="font-bold text-sm" x-text="paginaAtual.titulo"></h3>
+        <button @click="modalPaginaAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-4 flex-1">
+        <template x-if="paginaAtual.imagem">
+          <img :src="paginaAtual.imagem" class="w-full h-48 object-cover rounded-2xl shadow-sm">
+        </template>
+        <p class="text-xs text-gray-700 whitespace-pre-line leading-relaxed" x-text="paginaAtual.descricao"></p>
+        
+        <template x-if="paginaAtual.link">
+          <a :href="paginaAtual.link" class="block w-full py-3 bg-rose-600 hover:bg-rose-700 text-white text-center font-bold text-xs rounded-xl shadow transition">Acessar / Comprar Agora</a>
+        </template>
+      </div>
+    </div>
+  </div>
 
   <!-- BANNER PRINCIPAL DA DRIDALIA -->
   <section x-show="config.banner" class="relative w-full bg-gray-900 overflow-hidden">
@@ -99,7 +164,6 @@
               <i class="fa-solid fa-volume-high text-xs"></i>
             </button>
 
-            <!-- Botão Compartilhar / Gerar Link de Afiliado -->
             <button x-show="usuario.logado" @click="compartilharProduto(prod)" class="absolute top-3 left-3 bg-gray-900 hover:bg-black text-white p-2.5 rounded-full shadow-md transition z-10" title="Copiar link de Afiliado">
               <i class="fa-solid fa-share-nodes text-xs"></i>
             </button>
@@ -169,145 +233,7 @@
     </div>
   </main>
 
-  <!-- MODAL DE FAQ DO PRODUTO (ADMIN) -->
-  <div x-show="modalFaqProdutoAberto" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
-    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-      <div class="p-4 bg-amber-600 text-white flex justify-between items-center">
-        <h3 class="font-bold text-sm flex items-center">
-          <i class="fa-solid fa-comments mr-2"></i>Perguntas do Produto: <span x-text="prodEditandoFaq ? prodEditandoFaq.nome : ''" class="ml-1 font-normal underline"></span>
-        </h3>
-        <button @click="modalFaqProdutoAberto = false" class="text-white hover:opacity-80"><i class="fa-solid fa-xmark text-xl"></i></button>
-      </div>
-
-      <div class="p-5 overflow-y-auto space-y-4 flex-1">
-        <p class="text-xs text-gray-500">Cadastre perguntas e respostas específicas para este produto.</p>
-
-        <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 space-y-2">
-          <label class="text-[10px] font-bold text-amber-900 uppercase">Adicionar Nova Pergunta</label>
-          <input type="text" x-model="novaFaqProd.pergunta" placeholder="Ex: Este tecido estica?" class="w-full p-2 border rounded-xl text-xs bg-white">
-          <textarea x-model="novaFaqProd.resposta" placeholder="Resposta..." class="w-full p-2 border rounded-xl text-xs bg-white h-16"></textarea>
-          <button @click="adicionarFaqAoProduto()" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow">Adicionar Pergunta</button>
-        </div>
-
-        <div class="space-y-2">
-          <h4 class="font-bold text-xs text-gray-700">Perguntas Cadastradas:</h4>
-          <template x-for="(f, i) in (prodEditandoFaq ? prodEditandoFaq.faqs || [] : [])" :key="i">
-            <div class="p-3 bg-white border rounded-xl space-y-1 relative">
-              <button @click="removerFaqDoProduto(i)" class="absolute top-2 right-2 text-red-500 text-xs p-1"><i class="fa-solid fa-trash-can"></i></button>
-              <p class="font-bold text-xs text-gray-900 pr-6" x-text="f.pergunta"></p>
-              <p class="text-xs text-gray-600" x-text="f.resposta"></p>
-            </div>
-          </template>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL DE EDIÇÃO DE PRODUTO (ADMIN COM 5 IMAGENS) -->
-  <div x-show="modalEditProdutoAberto" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
-    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-      <div class="p-4 bg-blue-600 text-white flex justify-between items-center">
-        <h3 class="font-bold text-sm">Editar Produto (Até 5 Imagens)</h3>
-        <button @click="modalEditProdutoAberto = false" class="text-white hover:opacity-80"><i class="fa-solid fa-xmark text-xl"></i></button>
-      </div>
-
-      <div class="p-5 overflow-y-auto space-y-3 flex-1" x-if="prodEmEdicao">
-        <div>
-          <label class="text-[10px] font-bold text-gray-600">Nome do Produto</label>
-          <input type="text" x-model="prodEmEdicao.nome" class="w-full p-2 border rounded-xl text-xs bg-white">
-        </div>
-        <div>
-          <label class="text-[10px] font-bold text-gray-600">Preço (R$)</label>
-          <input type="number" x-model.number="prodEmEdicao.preco" class="w-full p-2 border rounded-xl text-xs bg-white">
-        </div>
-
-        <div class="space-y-1.5">
-          <label class="text-[10px] font-bold text-gray-600">URLs das Imagens:</label>
-          <input type="text" x-model="prodEmEdicao.img1" placeholder="URL Imagem 1" class="w-full p-2 border rounded-xl text-xs bg-white">
-          <input type="text" x-model="prodEmEdicao.img2" placeholder="URL Imagem 2" class="w-full p-2 border rounded-xl text-xs bg-white">
-          <input type="text" x-model="prodEmEdicao.img3" placeholder="URL Imagem 3" class="w-full p-2 border rounded-xl text-xs bg-white">
-          <input type="text" x-model="prodEmEdicao.img4" placeholder="URL Imagem 4" class="w-full p-2 border rounded-xl text-xs bg-white">
-          <input type="text" x-model="prodEmEdicao.img5" placeholder="URL Imagem 5" class="w-full p-2 border rounded-xl text-xs bg-white">
-        </div>
-
-        <div>
-          <label class="text-[10px] font-bold text-gray-600">Descrição</label>
-          <textarea x-model="prodEmEdicao.descricao" class="w-full p-2 border rounded-xl text-xs bg-white h-20"></textarea>
-        </div>
-        <button @click="salvarEdicaoProduto()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow mt-2">Salvar Alterações</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL DO CHATBOT -->
-  <div x-show="chatbotAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
-    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[620px]">
-      <div class="p-4 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
-        <div class="flex items-center space-x-3">
-          <div class="w-9 h-9 rounded-full bg-rose-600 flex items-center justify-center text-white font-bold text-sm">
-            <i class="fa-solid fa-robot"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-sm" x-text="produtoChat ? produtoChat.nome : 'Assistente Dridalia'"></h3>
-            <p class="text-[10px] text-emerald-400 flex items-center"><span class="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-1.5"></span>Atendente Virtual Online</p>
-          </div>
-        </div>
-        <button @click="chatbotAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
-      </div>
-
-      <template x-if="produtoChat">
-        <div class="bg-rose-50/50 p-3 border-b flex items-center space-x-3" x-data="{ corChat: produtoChat.cores[0], tamChat: produtoChat.tamanhos[0] }">
-          <img :src="produtoChat.imagens ? produtoChat.imagens[0] : produtoChat.imagem" class="w-16 h-16 object-cover rounded-xl border bg-white">
-          <div class="flex-1 min-w-0">
-            <h4 class="font-bold text-xs text-gray-900 truncate" x-text="produtoChat.nome"></h4>
-            <p class="text-xs font-black text-rose-600" x-text="'R$ ' + produtoChat.preco.toFixed(2)"></p>
-            
-            <div class="flex space-x-2 mt-1">
-              <select x-model="tamChat" class="text-[10px] p-1 border rounded bg-white font-semibold">
-                <template x-for="t in produtoChat.tamanhos" :key="t"><option :value="t" x-text="t"></option></template>
-              </select>
-              <select x-model="corChat" class="text-[10px] p-1 border rounded bg-white font-semibold">
-                <template x-for="c in produtoChat.cores" :key="c"><option :value="c" x-text="c"></option></template>
-              </select>
-            </div>
-          </div>
-          <button @click="adicionarAoCarrinho(produtoChat, corChat, tamChat); chatbotAberto = false;" class="px-3 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow transition whitespace-nowrap flex items-center space-x-1">
-            <i class="fa-solid fa-cart-plus"></i>
-            <span>Comprar</span>
-          </button>
-        </div>
-      </template>
-
-      <div class="p-4 overflow-y-auto flex-1 space-y-3 bg-gray-50">
-        <template x-for="(msg, i) in chatMensagens" :key="i">
-          <div :class="msg.tipo === 'usuario' ? 'justify-end' : 'justify-start'" class="flex">
-            <div :class="msg.tipo === 'usuario' ? 'bg-rose-600 text-white rounded-br-none' : 'bg-white border text-gray-800 shadow-sm rounded-bl-none'" class="max-w-[80%] p-3 rounded-2xl text-xs space-y-1">
-              <p x-text="msg.texto" class="whitespace-pre-line"></p>
-            </div>
-          </div>
-        </template>
-      </div>
-
-      <div class="p-2.5 bg-white border-t space-y-2">
-        <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-          <template x-for="(faq, index) in faqsParaExibir" :key="index">
-            <button @click="selecionarFaq(faq)" class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-full font-medium transition">
-              <span x-text="faq.pergunta"></span>
-            </button>
-          </template>
-        </div>
-      </div>
-
-      <form @submit.prevent="enviarMensagemLivre()" class="p-3 bg-white border-t flex items-center space-x-2">
-        <input type="text" x-model="mensagemChat" placeholder="Escreva sua dúvida aqui..." class="flex-1 p-2.5 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-rose-500">
-        <button type="submit" class="p-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow transition">
-          <i class="fa-solid fa-paper-plane text-xs"></i>
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- DRAWER DO CARRINHO -->
+  <!-- DRAWER DO CARRINHO & CHECKOUT (COM ORDER BUMP) -->
   <div x-show="carrinhoAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end" x-cloak>
     <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between">
       <div class="p-4 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
@@ -326,6 +252,7 @@
           </div>
         </template>
 
+        <!-- ITENS DO CARRINHO -->
         <template x-for="(item, index) in carrinho" :key="index">
           <div class="flex items-center space-x-3 border-b pb-3">
             <img :src="item.imagens ? item.imagens[0] : item.imagem" class="w-16 h-16 object-cover rounded-xl border">
@@ -348,6 +275,31 @@
           </div>
         </template>
 
+        <!-- ORDER BUMP -->
+        <div x-show="carrinho.length > 0" class="bg-rose-50/70 p-3.5 rounded-2xl border border-rose-200 space-y-2.5">
+          <h4 class="font-bold text-xs text-rose-900 flex items-center">
+            <i class="fa-solid fa-gift text-rose-600 mr-1.5"></i>Você também pode gostar disso (Oferta Especial):
+          </h4>
+          
+          <div class="space-y-2">
+            <template x-for="prodSugerido in produtos.slice(0, 3)" :key="prodSugerido.id">
+              <div class="bg-white p-2.5 rounded-xl border flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-2.5 min-w-0">
+                  <img :src="prodSugerido.imagens ? prodSugerido.imagens[0] : prodSugerido.imagem" class="w-12 h-12 object-cover rounded-lg border flex-shrink-0">
+                  <div class="min-w-0">
+                    <h5 class="font-bold text-[11px] text-gray-900 truncate" x-text="prodSugerido.nome"></h5>
+                    <p class="text-[11px] font-black text-rose-600" x-text="'R$ ' + prodSugerido.preco.toFixed(2)"></p>
+                  </div>
+                </div>
+                <button @click="adicionarAoCarrinho(prodSugerido, prodSugerido.cores ? prodSugerido.cores[0] : 'Padrão', prodSugerido.tamanhos ? prodSugerido.tamanhos[0] : 'M')" class="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-lg shadow transition whitespace-nowrap">
+                  + Adicionar
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- ENDEREÇO DE ENTREGA -->
         <div x-show="carrinho.length > 0" class="bg-gray-50 p-4 rounded-2xl border space-y-3">
           <div class="flex items-center justify-between">
             <h4 class="font-bold text-xs text-gray-900 flex items-center">
@@ -365,7 +317,7 @@
               <p class="font-bold text-gray-800" x-text="endereco.nomeCliente + ' (' + endereco.emailCliente + ')'"></p>
               <p class="text-gray-600" x-text="endereco.rua + ', ' + endereco.numero + ' - ' + endereco.bairro"></p>
               <p class="text-gray-600" x-text="endereco.cidade + '/' + endereco.estado + ' - CEP: ' + endereco.cep"></p>
-              <p class="text-emerald-600 font-bold text-[11px] pt-1"><i class="fa-solid fa-truck mr-1"></i>Frete: R$ 15,00</p>
+              <p class="text-emerald-600 font-bold text-[11px] pt-1"><i class="fa-solid fa-truck mr-1"></i>Frete Calculado</p>
             </div>
           </template>
 
@@ -416,7 +368,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE CONTA / PAINEL ADMIN / MÉTRICAS -->
+  <!-- MODAL DE CONTA / PAINEL ADMIN -->
   <div x-show="painelAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
     <div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       
@@ -448,8 +400,11 @@
               <button @click="abaPainel = 'admin'" :class="abaPainel === 'admin' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-rose-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
                 <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Admin Loja
               </button>
+              <button @click="abaPainel = 'paginas'" :class="abaPainel === 'paginas' ? 'border-b-2 border-blue-600 font-bold text-blue-600 bg-blue-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
+                <i class="fa-solid fa-file-circle-plus mr-1.5 text-blue-600"></i>📄 Páginas
+              </button>
               <button @click="abaPainel = 'metricas'" :class="abaPainel === 'metricas' ? 'border-b-2 border-purple-600 font-bold text-purple-600 bg-purple-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
-                <i class="fa-solid fa-chart-line mr-1.5 text-purple-600"></i>📊 Métricas & Cliques
+                <i class="fa-solid fa-chart-line mr-1.5 text-purple-600"></i>📊 Métricas
               </button>
             </div>
           </template>
@@ -523,77 +478,61 @@
               </div>
             </div>
 
+            <!-- ABA DE GESTÃO DE PÁGINAS -->
+            <div x-show="abaPainel === 'paginas'" class="space-y-6">
+              <div class="border-b pb-3">
+                <h3 class="font-bold text-gray-900 text-lg">Criar e Gerenciar Páginas da Loja</h3>
+              </div>
+              <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-3">
+                <h4 class="font-bold text-xs text-blue-900"><i class="fa-solid fa-plus-circle mr-1.5"></i>Nova Página Personalizada</h4>
+                <input type="text" x-model="novaPagina.titulo" placeholder="Título da Página" class="w-full p-2.5 border rounded-xl text-xs bg-white">
+                <input type="text" x-model="novaPagina.imagem" placeholder="URL da Imagem da Página" class="w-full p-2.5 border rounded-xl text-xs bg-white">
+                <textarea x-model="novaPagina.descricao" placeholder="Descrição / Conteúdo..." class="w-full p-2.5 border rounded-xl text-xs bg-white h-20"></textarea>
+                <input type="text" x-model="novaPagina.link" placeholder="Link de Destino do Botão" class="w-full p-2.5 border rounded-xl text-xs bg-white">
+                <button @click="adicionarPaginaAdmin()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow">Criar Página</button>
+              </div>
+
+              <div class="space-y-2">
+                <h4 class="font-bold text-xs text-gray-700">Páginas Criadas:</h4>
+                <template x-for="(p, index) in paginasAdmin" :key="p.id">
+                  <div class="p-3 bg-white border rounded-xl flex items-center justify-between">
+                    <div>
+                      <h5 class="font-bold text-xs text-gray-900" x-text="p.titulo"></h5>
+                    </div>
+                    <button @click="excluirPaginaAdmin(index)" class="text-red-500 text-xs p-2"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </template>
+              </div>
+            </div>
+
             <!-- MENU DE MÉTRICAS -->
             <div x-show="abaPainel === 'metricas'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
-                <div>
-                  <h3 class="font-bold text-gray-900 text-lg">Métricas de Cliques e Origem de Tráfego</h3>
-                  <p class="text-xs text-gray-500">Monitorize quem clicou, localização e códigos de afiliados.</p>
-                </div>
-                <button @click="limparMetricas()" class="bg-red-100 text-red-700 hover:bg-red-200 text-xs px-3 py-1.5 rounded-xl font-bold transition">Limpar Histórico</button>
+                <h3 class="font-bold text-gray-900 text-lg">Métricas de Cliques e Tráfego</h3>
+                <button @click="limparMetricas()" class="bg-red-100 text-red-700 text-xs px-3 py-1.5 rounded-xl font-bold">Limpar</button>
               </div>
-
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="bg-purple-50 border border-purple-200 p-4 rounded-2xl">
+                <div class="bg-purple-50 border p-4 rounded-2xl">
                   <span class="text-[10px] font-bold text-purple-800 uppercase">Total de Cliques</span>
                   <p class="text-2xl font-black text-purple-600 mt-1" x-text="metricasCliques.length"></p>
-                </div>
-                <div class="bg-blue-50 border border-blue-200 p-4 rounded-2xl">
-                  <span class="text-[10px] font-bold text-blue-800 uppercase">Cliques Logados</span>
-                  <p class="text-2xl font-black text-blue-600 mt-1" x-text="metricasCliques.filter(m => m.usuario !== 'Visitante Anônimo').length"></p>
-                </div>
-                <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl">
-                  <span class="text-[10px] font-bold text-emerald-800 uppercase">Cliques Anônimos</span>
-                  <p class="text-2xl font-black text-emerald-600 mt-1" x-text="metricasCliques.filter(m => m.usuario === 'Visitante Anônimo').length"></p>
-                </div>
-              </div>
-
-              <div class="bg-white border rounded-2xl overflow-hidden">
-                <div class="p-3 bg-gray-100 border-b font-bold text-xs text-gray-700">Histórico de Cliques</div>
-                <div class="overflow-x-auto max-h-96">
-                  <table class="w-full text-left text-xs">
-                    <thead class="bg-gray-50 border-b text-gray-600">
-                      <tr>
-                        <th class="p-3">Data / Hora</th>
-                        <th class="p-3">Usuário</th>
-                        <th class="p-3">Afiliado (Ref)</th>
-                        <th class="p-3">Localização</th>
-                        <th class="p-3">Detalhe</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y">
-                      <template x-if="metricasCliques.length === 0">
-                        <tr><td colspan="5" class="p-6 text-center text-gray-400 italic">Nenhum clique registado ainda.</td></tr>
-                      </template>
-                      <template x-for="m in metricasCliques" :key="m.id">
-                        <tr class="hover:bg-gray-50">
-                          <td class="p-3 font-mono text-[11px]" x-text="m.data"></td>
-                          <td class="p-3 font-bold" x-text="m.usuario"></td>
-                          <td class="p-3 font-mono text-purple-600 font-semibold" x-text="m.ref"></td>
-                          <td class="p-3 text-gray-600" x-text="m.localizacao"></td>
-                          <td class="p-3 text-gray-800 truncate max-w-xs" x-text="m.origem"></td>
-                        </tr>
-                      </template>
-                    </tbody>
-                  </table>
                 </div>
               </div>
             </div>
 
-            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (COM 5 IMAGENS NO CADASTRO) -->
+            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (COM SUPER FRETE) -->
             <div x-show="abaPainel === 'admin'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
                 <div>
                   <h3 class="font-bold text-gray-900 text-lg">Painel de Controle Administrador</h3>
                   <p class="text-xs text-gray-500">Gerencie Pop-up, Mercado Pago, Frete e Produtos.</p>
                 </div>
-                <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Administrador Supremo</span>
+                <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Admin Supremo</span>
               </div>
 
               <!-- GESTÃO DO POP-UP -->
               <div class="bg-amber-50/60 p-4 rounded-2xl border border-amber-200 space-y-3">
                 <div class="flex items-center justify-between">
-                  <h4 class="font-bold text-xs text-amber-900"><i class="fa-solid fa-bullhorn mr-2"></i>Gestão do Pop-up Promocional</h4>
+                  <h4 class="font-bold text-xs text-amber-900"><i class="fa-solid fa-bullhorn mr-2"></i>Pop-up Promocional</h4>
                   <label class="flex items-center space-x-2 text-xs font-semibold cursor-pointer">
                     <input type="checkbox" x-model="config.popupAtivo" class="rounded text-rose-600">
                     <span>Ativar Pop-up</span>
@@ -616,20 +555,27 @@
                 </div>
               </div>
 
-              <!-- FRETE -->
+              <!-- CONFIGURAÇÃO DE FRETE (COM SUPER FRETE ADICIONADO) -->
               <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-4">
                 <h4 class="font-bold text-xs text-blue-900"><i class="fa-solid fa-truck-fast mr-2"></i>Integração de Fretes</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <select x-model="config.freteEmpresa" class="p-2.5 border rounded-xl text-xs bg-white">
-                    <option value="melhorenvio">Melhor Envio</option>
-                    <option value="frenet">Frenet API</option>
-                    <option value="correios">Correios Direct API</option>
-                  </select>
-                  <input type="password" x-model="config.freteToken" placeholder="Token da API" class="p-2.5 border rounded-xl text-xs bg-white">
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Plataforma de Frete Principal</label>
+                    <select x-model="config.freteEmpresa" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                      <option value="superfrete">Super Frete</option>
+                      <option value="melhorenvio">Melhor Envio</option>
+                      <option value="frenet">Frenet API</option>
+                      <option value="correios">Correios Direct API</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Token da API de Frete</label>
+                    <input type="password" x-model="config.freteToken" placeholder="Cole o token da API" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                  </div>
                 </div>
               </div>
 
-              <!-- CADASTRAR PRODUTOS (COM 5 CAMPOS DE IMAGEM) -->
+              <!-- CADASTRAR PRODUTOS -->
               <div class="bg-gray-50 p-4 rounded-2xl border space-y-3">
                 <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-plus-circle text-emerald-600 mr-1.5"></i>Cadastrar Novo Produto (até 5 Imagens)</h4>
                 
@@ -639,7 +585,7 @@
                 </div>
 
                 <div class="space-y-1.5">
-                  <label class="text-[10px] font-bold text-gray-600">URLs das Imagens (Fotos para Rolar de lado):</label>
+                  <label class="text-[10px] font-bold text-gray-600">URLs das Imagens:</label>
                   <input type="text" x-model="novoProd.img1" placeholder="URL da Imagem 1 (Principal)" class="w-full p-2 border rounded-xl text-xs bg-white">
                   <input type="text" x-model="novoProd.img2" placeholder="URL da Imagem 2 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
                   <input type="text" x-model="novoProd.img3" placeholder="URL da Imagem 3 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
@@ -676,6 +622,8 @@
         chatbotAberto: false,
         modalFaqProdutoAberto: false,
         modalEditProdutoAberto: false,
+        menuLateralAberto: false,
+        modalPaginaAberto: false,
         modoConta: 'login',
         abaPainel: 'compras',
 
@@ -707,7 +655,7 @@
           popupImagem: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600',
           mercadopagoPublicKey: '',
           mercadopagoAccessToken: '',
-          freteEmpresa: 'melhorenvio',
+          freteEmpresa: 'superfrete',
           freteToken: ''
         },
 
@@ -725,8 +673,11 @@
         novaFaqProd: { pergunta: '', resposta: '' },
         prodEmEdicao: null,
         
-        // 5 CAMPOS DE IMAGEM NO NOVO PRODUTO
         novoProd: { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' },
+
+        paginaAtual: { titulo: '', imagem: '', descricao: '', link: '' },
+        novaPagina: { titulo: '', imagem: '', descricao: '', link: '' },
+        paginasAdmin: [],
 
         produtos: [
           {
@@ -741,6 +692,18 @@
               'https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=600'
             ],
             faqs: [{ pergunta: 'Encolhe?', resposta: 'Não encolhe na lavagem.' }]
+          },
+          {
+            id: 2,
+            nome: 'Vestido Midi Elegance Alfaiataria',
+            preco: 239.90,
+            descricao: 'Vestido midi fluido de alfaiataria com corte impecável.',
+            tamanhos: ['P', 'M', 'G'],
+            cores: ['Preto', 'Nude', 'Vinho'],
+            imagens: [
+              'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=600'
+            ],
+            faqs: []
           }
         ],
 
@@ -766,6 +729,9 @@
           const met = localStorage.getItem('dridalia_metricas_cliques');
           if (met) this.metricasCliques = JSON.parse(met);
 
+          const pgs = localStorage.getItem('dridalia_paginas_admin');
+          if (pgs) this.paginasAdmin = JSON.parse(pgs);
+
           const urlParams = new URLSearchParams(window.location.search);
           const refParam = urlParams.get('ref');
           const prodParam = urlParams.get('prod');
@@ -779,9 +745,56 @@
               localizacao: 'Brasil (IP Rastreado)',
               origem: prodParam ? `Produto ID: ${prodParam}` : 'Acesso Geral à Loja'
             };
-
             this.metricasCliques.unshift(novoClique);
             localStorage.setItem('dridalia_metricas_cliques', JSON.stringify(this.metricasCliques));
+          }
+        },
+
+        abrirPaginaInstitucional(tipo) {
+          this.menuLateralAberto = false;
+          if (tipo === 'privacidade') {
+            this.paginaAtual = {
+              titulo: 'Política de Privacidade',
+              imagem: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600',
+              descricao: 'A sua privacidade é importante para nós. É política da Dridalia respeitar a sua privacidade em relação a qualquer informação sua.'
+            };
+          } else if (tipo === 'entrega') {
+            this.paginaAtual = {
+              titulo: 'Política de Frete e Entrega',
+              imagem: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=600',
+              descricao: 'Enviamos para todo o Brasil com rapidez e segurança via Super Frete e Correios.'
+            };
+          } else if (tipo === 'devolucao') {
+            this.paginaAtual = {
+              titulo: 'Política de Trocas e Devoluções',
+              imagem: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=600',
+              descricao: 'Garantimos a sua satisfação! Você tem até 7 dias corridos após o recebimento.'
+            };
+          }
+          this.modalPaginaAberto = true;
+        },
+
+        abrirPaginaDinamica(pag) {
+          this.menuLateralAberto = false;
+          this.paginaAtual = pag;
+          this.modalPaginaAberto = true;
+        },
+
+        adicionarPaginaAdmin() {
+          if (!this.novaPagina.titulo || !this.novaPagina.descricao) {
+            alert('Preencha pelo menos o título e a descrição da página.');
+            return;
+          }
+          this.paginasAdmin.push({ id: Date.now(), ...this.novaPagina });
+          localStorage.setItem('dridalia_paginas_admin', JSON.stringify(this.paginasAdmin));
+          this.novaPagina = { titulo: '', imagem: '', descricao: '', link: '' };
+          alert('Página criada com sucesso!');
+        },
+
+        excluirPaginaAdmin(index) {
+          if (confirm('Deseja excluir esta página?')) {
+            this.paginasAdmin.splice(index, 1);
+            localStorage.setItem('dridalia_paginas_admin', JSON.stringify(this.paginasAdmin));
           }
         },
 
