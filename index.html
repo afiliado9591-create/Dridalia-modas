@@ -21,16 +21,17 @@
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased font-sans" x-data="dridaliaApp()">
 
-  <!-- POP-UP PROMOCIONAL -->
+  <!-- POP-UP PROMOCIONAL DINÂMICO -->
   <div x-show="config.popupAtivo && popupVisivel" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
     <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative">
       <button @click="popupVisivel = false" class="absolute top-3 right-3 bg-gray-900/60 hover:bg-gray-900 text-white w-8 h-8 rounded-full flex items-center justify-center z-10">
         <i class="fa-solid fa-xmark"></i>
       </button>
       <template x-if="config.popupImagem">
-        <img :src="config.popupImagem" class="w-full h-48 object-cover">
+        <img :src="config.popupImagem" class="w-full h-56 object-cover">
       </template>
       <div class="p-6 text-center space-y-3">
+        <span class="bg-rose-100 text-rose-800 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase" x-text="config.popupTag || 'Oferta Especial'"></span>
         <h3 class="text-xl font-bold text-gray-900" x-text="config.popupTitulo"></h3>
         <p class="text-xs text-gray-600" x-text="config.popupTexto"></p>
         <button @click="popupVisivel = false" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow">Aproveitar Agora</button>
@@ -75,21 +76,24 @@
       <template x-for="prod in produtos" :key="prod.id">
         <article class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-lg transition duration-300 relative" x-data="{ imgAtiva: 0, corSel: prod.cores ? prod.cores[0] : '', tamSel: prod.tamanhos ? prod.tamanhos[0] : '' }">
           
-          <!-- GALERIA COM ATÉ 5 IMAGENS (ROLAR LATERAL + ÁUDIO CONTÍNUO) -->
+          <!-- BOTÃO RÁPIDO DE ADMIN: DESTACAR PRODUTO NO POP-UP -->
+          <template x-if="usuario.logado && usuario.email === adminEmail">
+            <button @click="definirProdutoPopup(prod)" class="absolute top-3 left-3 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl shadow-lg z-20 text-[10px] font-bold flex items-center space-x-1 transition" title="Colocar este produto no Pop-up">
+              <i class="fa-solid fa-bullhorn"></i>
+              <span>Destacar no Pop-up</span>
+            </button>
+          </template>
+
+          <!-- GALERIA COM ATÉ 5 IMAGENS -->
           <div class="relative aspect-product bg-gray-100 overflow-hidden group/galeria">
             <img :src="prod.imagens[imgAtiva] || prod.imagem" :alt="prod.nome" class="w-full h-full object-cover transition duration-500" loading="lazy">
             
-            <!-- Botão de Ouvir Áudio da Descrição -->
+            <!-- Botão de Ouvir Áudio -->
             <button @click="falarTexto(prod.nome + '. ' + prod.descricao)" class="absolute top-3 right-3 bg-rose-600 hover:bg-rose-700 text-white p-2.5 rounded-full shadow-lg backdrop-blur-md transition z-10 flex items-center space-x-1" title="Ouvir Descrição em Áudio">
               <i class="fa-solid fa-volume-high text-xs"></i>
             </button>
 
-            <!-- Botão de Compartilhar Link de Afiliado -->
-            <button x-show="usuario.logado" @click="compartilharProduto(prod)" class="absolute top-3 left-3 bg-gray-900 hover:bg-black text-white p-2.5 rounded-full shadow-md transition z-10" title="Compartilhar com meu link de Afiliado">
-              <i class="fa-solid fa-share-nodes text-xs"></i>
-            </button>
-
-            <!-- SETAS PARA ROLAR AS IMAGENS DE LADO -->
+            <!-- Setas para Rolar Imagens -->
             <template x-if="prod.imagens && prod.imagens.length > 1">
               <div>
                 <button @click="imgAtiva = (imgAtiva === 0) ? prod.imagens.length - 1 : imgAtiva - 1" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black text-white w-7 h-7 rounded-full flex items-center justify-center transition">
@@ -98,8 +102,6 @@
                 <button @click="imgAtiva = (imgAtiva === prod.imagens.length - 1) ? 0 : imgAtiva + 1" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black text-white w-7 h-7 rounded-full flex items-center justify-center transition">
                   <i class="fa-solid fa-chevron-right text-xs"></i>
                 </button>
-
-                <!-- INDICADORES DE FOTO (PONTOS) -->
                 <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5 z-10">
                   <template x-for="(img, idx) in prod.imagens" :key="idx">
                     <button @click="imgAtiva = idx" :class="imgAtiva === idx ? 'bg-rose-600 w-4' : 'bg-white/80 w-1.5'" class="h-1.5 rounded-full transition-all duration-300"></button>
@@ -115,7 +117,7 @@
               <h2 class="font-bold text-gray-900 text-base line-clamp-1" x-text="prod.nome"></h2>
             </div>
 
-            <!-- OPÇÕES DE TAMANHO E COR NA VITRINE -->
+            <!-- OPÇÕES DE TAMANHO E COR -->
             <div class="space-y-2 border-t pt-2">
               <div class="flex items-center justify-between text-[11px]">
                 <span class="font-bold text-gray-600">Tamanho:</span>
@@ -158,11 +160,9 @@
     </div>
   </main>
 
-  <!-- MODAL DO CHATBOT COM CARD DO PRODUTO DENTRO -->
+  <!-- MODAL DO CHATBOT -->
   <div x-show="chatbotAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
     <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[620px]">
-      
-      <!-- Cabeçalho Chatbot -->
       <div class="p-4 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-full bg-rose-600 flex items-center justify-center text-white font-bold text-sm">
@@ -176,7 +176,6 @@
         <button @click="chatbotAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
 
-      <!-- CARD DO PRODUTO DENTRO DO CHATBOT -->
       <template x-if="produtoChat">
         <div class="bg-rose-50/50 p-3 border-b flex items-center space-x-3" x-data="{ corChat: produtoChat.cores[0], tamChat: produtoChat.tamanhos[0] }">
           <img :src="produtoChat.imagens ? produtoChat.imagens[0] : produtoChat.imagem" class="w-16 h-16 object-cover rounded-xl border bg-white">
@@ -200,7 +199,6 @@
         </div>
       </template>
 
-      <!-- Mensagens do Chat -->
       <div class="p-4 overflow-y-auto flex-1 space-y-3 bg-gray-50" id="chatContainer">
         <template x-for="(msg, i) in chatMensagens" :key="i">
           <div :class="msg.tipo === 'usuario' ? 'justify-end' : 'justify-start'" class="flex">
@@ -211,7 +209,6 @@
         </template>
       </div>
 
-      <!-- FAQs -->
       <div class="p-2.5 bg-white border-t space-y-2">
         <div class="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
           <template x-for="(faq, index) in faqsPadrao" :key="index">
@@ -231,11 +228,9 @@
     </div>
   </div>
 
-  <!-- DRAWER DO CARRINHO & CHECKOUT DE FRETE + PAGAMENTO -->
+  <!-- DRAWER DO CARRINHO & CHECKOUT -->
   <div x-show="carrinhoAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end" x-cloak>
     <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between">
-      
-      <!-- Cabeçalho -->
       <div class="p-4 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-bag-shopping text-rose-500 text-xl"></i>
@@ -244,9 +239,7 @@
         <button @click="carrinhoAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
 
-      <!-- Conteúdo de Itens e Endereço -->
       <div class="p-4 overflow-y-auto flex-1 space-y-5">
-        
         <template x-if="carrinho.length === 0">
           <div class="text-center py-12 text-gray-400 space-y-3">
             <i class="fa-solid fa-basket-shopping text-4xl"></i>
@@ -254,7 +247,6 @@
           </div>
         </template>
 
-        <!-- ITENS DO PEDIDO -->
         <template x-for="(item, index) in carrinho" :key="index">
           <div class="flex items-center space-x-3 border-b pb-3">
             <img :src="item.imagens ? item.imagens[0] : item.imagem" class="w-16 h-16 object-cover rounded-xl border">
@@ -277,7 +269,6 @@
           </div>
         </template>
 
-        <!-- SEÇÃO DE ENDEREÇO E FRETE (ESTILO SHOPEE) -->
         <div x-show="carrinho.length > 0" class="bg-gray-50 p-4 rounded-2xl border space-y-3">
           <div class="flex items-center justify-between">
             <h4 class="font-bold text-xs text-gray-900 flex items-center">
@@ -290,17 +281,15 @@
             </template>
           </div>
 
-          <!-- SE JÁ TIVER ENDEREÇO CADASTRADO -->
           <template x-if="enderecoSalvo && !editandoEndereco">
             <div class="bg-white p-3 rounded-xl border text-xs space-y-1">
               <p class="font-bold text-gray-800" x-text="endereco.nomeCliente + ' (' + endereco.emailCliente + ')'"></p>
               <p class="text-gray-600" x-text="endereco.rua + ', ' + endereco.numero + ' - ' + endereco.bairro"></p>
               <p class="text-gray-600" x-text="endereco.cidade + '/' + endereco.estado + ' - CEP: ' + endereco.cep"></p>
-              <p class="text-emerald-600 font-bold text-[11px] pt-1"><i class="fa-solid fa-truck mr-1"></i>Frete Calculado: R$ 15,00</p>
+              <p class="text-emerald-600 font-bold text-[11px] pt-1"><i class="fa-solid fa-truck mr-1"></i>Frete Fixo / Calculado: R$ 15,00</p>
             </div>
           </template>
 
-          <!-- FORMULÁRIO DE ENDEREÇO -->
           <div x-show="!enderecoSalvo || editandoEndereco" class="space-y-2">
             <div class="grid grid-cols-2 gap-2">
               <input type="text" x-model="endereco.nomeCliente" placeholder="Seu Nome Completo" class="p-2 border rounded-xl text-xs bg-white">
@@ -321,10 +310,8 @@
             <button @click="salvarEndereco()" class="w-full py-2 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Confirmar Endereço</button>
           </div>
         </div>
-
       </div>
 
-      <!-- RODAPÉ DE CHECKOUT DE PAGAMENTO -->
       <div class="p-4 border-t bg-gray-50 space-y-3" x-show="carrinho.length > 0">
         <div class="space-y-1.5 text-xs text-gray-600">
           <div class="flex justify-between">
@@ -377,7 +364,6 @@
             <i class="fa-solid fa-sack-dollar mr-1.5 text-emerald-600"></i>Painel de Afiliado
           </button>
 
-          <!-- MENU ADMIN EXCLUSIVO (APENAS PARA O SEU E-MAIL) -->
           <template x-if="usuario.email === adminEmail">
             <button @click="abaPainel = 'admin'" :class="abaPainel === 'admin' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-rose-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
               <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Painel Admin (Dono)
@@ -489,14 +475,33 @@
               </div>
             </div>
 
-            <!-- PAINEL ADMIN COM MERCADO PAGO E FRETE RESTAURADOS -->
+            <!-- PAINEL ADMIN COMPLETO (POP-UP, MERCADO PAGO, FRETE, PRODUTOS) -->
             <div x-show="abaPainel === 'admin'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
                 <div>
                   <h3 class="font-bold text-gray-900 text-lg">Painel de Controle Administrador</h3>
-                  <p class="text-xs text-gray-500">Gerencie produtos, chaves do Mercado Pago e APIs de Frete.</p>
+                  <p class="text-xs text-gray-500">Gerencie o Pop-up, Mercado Pago, Frete e Produtos.</p>
                 </div>
                 <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Administrador Supremo</span>
+              </div>
+
+              <!-- GESTÃO DO POP-UP PROMOCIONAL -->
+              <div class="bg-amber-50/60 p-4 rounded-2xl border border-amber-200 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-bold text-xs text-amber-900 flex items-center">
+                    <i class="fa-solid fa-bullhorn text-amber-600 mr-2"></i>Gestão do Pop-up Promocional
+                  </h4>
+                  <label class="flex items-center space-x-2 cursor-pointer text-xs font-semibold">
+                    <input type="checkbox" x-model="config.popupAtivo" class="rounded text-rose-600">
+                    <span>Ativar Pop-up</span>
+                  </label>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input type="text" x-model="config.popupTag" placeholder="Tag (ex: Oferta Especial)" class="p-2 border rounded-xl text-xs bg-white">
+                  <input type="text" x-model="config.popupTitulo" placeholder="Título da Promoção" class="p-2 border rounded-xl text-xs bg-white">
+                </div>
+                <input type="text" x-model="config.popupImagem" placeholder="URL da Imagem do Pop-up" class="w-full p-2 border rounded-xl text-xs bg-white">
+                <textarea x-model="config.popupTexto" placeholder="Texto descritivo do pop-up..." class="w-full p-2 border rounded-xl text-xs bg-white h-16"></textarea>
               </div>
 
               <!-- CONFIGURAÇÃO DO MERCADO PAGO -->
@@ -617,8 +622,9 @@
           logo: '',
           banner: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200',
           popupAtivo: true,
-          popupTitulo: 'Oferta Especial de Boas-Vindas!',
-          popupTexto: 'Use o cupom BEMVINDA e ganhe 10% de desconto no seu primeiro pedido.',
+          popupTag: 'Oferta Especial',
+          popupTitulo: 'Conjunto em Destaque!',
+          popupTexto: 'Aproveite o preço promocional exclusivo deste lançamento por tempo limitado.',
           popupImagem: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600',
           mercadopagoPublicKey: '',
           mercadopagoAccessToken: '',
@@ -690,6 +696,17 @@
 
           const car = localStorage.getItem('dridalia_carrinho');
           if (car) this.carrinho = JSON.parse(car);
+        },
+
+        // FUNÇÃO PARA ESCOLHER PRODUTO DIRETO DA VITRINE PARA O POP-UP
+        definirProdutoPopup(prod) {
+          this.config.popupTitulo = prod.nome;
+          this.config.popupTexto = `Por apenas R$ ${prod.preco.toFixed(2)}. ${prod.descricao}`;
+          this.config.popupImagem = prod.imagens && prod.imagens.length > 0 ? prod.imagens[0] : prod.imagem;
+          this.config.popupAtivo = true;
+          
+          localStorage.setItem('dridalia_config', JSON.stringify(this.config));
+          alert(`Sucesso! O produto "${prod.nome}" foi definido como destaque no Pop-up promocional.`);
         },
 
         buscarCep() {
@@ -880,7 +897,7 @@
 
         salvarConfiguracoes() {
           localStorage.setItem('dridalia_config', JSON.stringify(this.config));
-          alert('Configurações do Mercado Pago, Frete e Loja salvas com sucesso!');
+          alert('Configurações do Pop-up, Mercado Pago, Frete e Loja salvas com sucesso!');
         },
 
         falarTexto(texto) {
