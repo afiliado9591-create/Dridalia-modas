@@ -7,8 +7,10 @@
   <title>Dridalia Moda Feminina | Loja Virtual Oficial</title>
   <meta name="description" content="Compre moda feminina elegante, conjuntos e lançamentos na Dridalia Moda Feminina.">
   
+  <!-- TAILWIND CSS & FONTAWESOME -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- ALPINE.JS -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
   <style>
@@ -39,6 +41,7 @@
   <!-- HEADER DRIDALIA MODA FEMININA -->
   <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      
       <div class="flex items-center space-x-3 cursor-pointer" @click="painelAberto = false">
         <template x-if="config.logo">
           <img :src="config.logo" alt="Dridalia Logo" class="h-10 w-auto object-contain">
@@ -57,6 +60,7 @@
           <span x-show="carrinho.length > 0" class="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white" x-text="carrinho.reduce((acc, item) => acc + item.qtd, 0)"></span>
         </button>
       </div>
+
     </div>
   </header>
 
@@ -69,37 +73,81 @@
   <main class="max-w-7xl mx-auto px-4 py-8">
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       <template x-for="prod in produtos" :key="prod.id">
-        <article class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-lg transition duration-300 relative">
+        <article class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-lg transition duration-300 relative" x-data="{ imgAtiva: 0, corSel: prod.cores ? prod.cores[0] : '', tamSel: prod.tamanhos ? prod.tamanhos[0] : '' }">
           
-          <div class="relative aspect-product bg-gray-100 overflow-hidden">
-            <img :src="prod.imagem" :alt="prod.nome" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
+          <!-- GALERIA COM ATÉ 5 IMAGENS (ROLAR LATERAL + ÁUDIO CONTÍNUO) -->
+          <div class="relative aspect-product bg-gray-100 overflow-hidden group/galeria">
+            <img :src="prod.imagens[imgAtiva] || prod.imagem" :alt="prod.nome" class="w-full h-full object-cover transition duration-500" loading="lazy">
             
-            <button @click="falarTexto(prod.nome + '. ' + prod.descricao)" class="absolute top-3 right-3 bg-black/60 hover:bg-black text-white p-2.5 rounded-full backdrop-blur-md transition shadow" title="Ouvir Descrição">
+            <!-- Botão de Ouvir Áudio da Descrição -->
+            <button @click="falarTexto(prod.nome + '. ' + prod.descricao)" class="absolute top-3 right-3 bg-rose-600 hover:bg-rose-700 text-white p-2.5 rounded-full shadow-lg backdrop-blur-md transition z-10 flex items-center space-x-1" title="Ouvir Descrição">
               <i class="fa-solid fa-volume-high text-xs"></i>
             </button>
 
-            <button x-show="usuario.logado" @click="compartilharProduto(prod)" class="absolute bottom-3 right-3 bg-rose-600 hover:bg-rose-700 text-white p-2.5 rounded-full shadow-md transition" title="Compartilhar com meu link de Afiliado">
+            <!-- Botão de Compartilhar Link de Afiliado -->
+            <button x-show="usuario.logado" @click="compartilharProduto(prod)" class="absolute top-3 left-3 bg-gray-900 hover:bg-black text-white p-2.5 rounded-full shadow-md transition z-10" title="Compartilhar com meu link de Afiliado">
               <i class="fa-solid fa-share-nodes text-xs"></i>
             </button>
+
+            <!-- SETAS PARA ROLAR AS IMAGENS DE LADO -->
+            <template x-if="prod.imagens && prod.imagens.length > 1">
+              <div>
+                <button @click="imgAtiva = (imgAtiva === 0) ? prod.imagens.length - 1 : imgAtiva - 1" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black text-white w-7 h-7 rounded-full flex items-center justify-center transition">
+                  <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+                <button @click="imgAtiva = (imgAtiva === prod.imagens.length - 1) ? 0 : imgAtiva + 1" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black text-white w-7 h-7 rounded-full flex items-center justify-center transition">
+                  <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+
+                <!-- INDICADORES DE FOTO (PONTOS) -->
+                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5 z-10">
+                  <template x-for="(img, idx) in prod.imagens" :key="idx">
+                    <button @click="imgAtiva = idx" :class="imgAtiva === idx ? 'bg-rose-600 w-4' : 'bg-white/80 w-1.5'" class="h-1.5 rounded-full transition-all duration-300"></button>
+                  </template>
+                </div>
+              </div>
+            </template>
           </div>
 
-          <div class="p-4 flex-1 flex flex-col justify-between">
+          <!-- Informações do Produto -->
+          <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
             <div>
               <h2 class="font-bold text-gray-900 text-base line-clamp-1" x-text="prod.nome"></h2>
               <p class="text-xs text-gray-500 mt-1 line-clamp-2" x-text="prod.descricao"></p>
             </div>
 
-            <div class="mt-4">
+            <!-- OPÇÕES DE TAMANHO E COR NA VITRINE -->
+            <div class="space-y-2 border-t pt-2">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="font-bold text-gray-600">Tamanho:</span>
+                <div class="flex space-x-1">
+                  <template x-for="tam in (prod.tamanhos || ['P', 'M', 'G', 'GG'])" :key="tam">
+                    <button @click="tamSel = tam" :class="tamSel === tam ? 'bg-rose-600 text-white font-bold' : 'bg-gray-100 text-gray-700'" class="px-2 py-0.5 rounded-md text-[10px] transition" x-text="tam"></button>
+                  </template>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="font-bold text-gray-600">Cor:</span>
+                <div class="flex space-x-1">
+                  <template x-for="cor in (prod.cores || ['Rosa', 'Preto', 'Nude'])" :key="cor">
+                    <button @click="corSel = cor" :class="corSel === cor ? 'border-rose-600 font-bold text-rose-600 border-2' : 'border-gray-200 text-gray-600 border'" class="px-2 py-0.5 rounded-md text-[10px] bg-white transition" x-text="cor"></button>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <div>
               <span class="text-xl font-extrabold text-gray-900" x-text="'R$ ' + prod.preco.toFixed(2)"></span>
 
               <div class="grid grid-cols-2 gap-2 mt-3">
-                <!-- BOTÃO DE DÚVIDAS / CHATBOT -->
                 <button @click="abrirChatbot(prod)" class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 transition">
                   <i class="fa-solid fa-comments text-rose-600"></i>
                   <span>Dúvidas</span>
                 </button>
 
-                <button @click="adicionarAoCarrinho(prod)" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 shadow transition">
+                <!-- COMPRAR -> ADICIONA E ABRE CARRINHO NA HORA -->
+                <button @click="adicionarAoCarrinho(prod, corSel, tamSel)" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 shadow transition">
                   <i class="fa-solid fa-cart-plus"></i>
                   <span>Comprar</span>
                 </button>
@@ -112,11 +160,9 @@
     </div>
   </main>
 
-  <!-- MODAL DO CHATBOT DE PERGUNTAS E RESPOSTAS (FAQ DO PRODUTO) -->
+  <!-- MODAL DO CHATBOT DE DÚVIDAS DO PRODUTO -->
   <div x-show="chatbotAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
     <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[580px]">
-      
-      <!-- Cabeçalho Chatbot -->
       <div class="p-4 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-full bg-rose-600 flex items-center justify-center text-white font-bold text-sm">
@@ -130,7 +176,6 @@
         <button @click="chatbotAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
 
-      <!-- Área de Mensagens do Chat -->
       <div class="p-4 overflow-y-auto flex-1 space-y-3 bg-gray-50" id="chatContainer">
         <template x-for="(msg, i) in chatMensagens" :key="i">
           <div :class="msg.tipo === 'usuario' ? 'justify-end' : 'justify-start'" class="flex">
@@ -141,7 +186,6 @@
         </template>
       </div>
 
-      <!-- Opções de Perguntas Rápidas -->
       <div class="p-2.5 bg-white border-t space-y-2">
         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block px-1">Perguntas Frequentes:</span>
         <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
@@ -153,24 +197,22 @@
         </div>
       </div>
 
-      <!-- Campo de Entrada do Chat -->
       <form @submit.prevent="enviarMensagemLivre()" class="p-3 bg-white border-t flex items-center space-x-2">
         <input type="text" x-model="mensagemChat" placeholder="Escreva sua dúvida aqui..." class="flex-1 p-2.5 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-rose-500">
         <button type="submit" class="p-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow transition">
           <i class="fa-solid fa-paper-plane text-xs"></i>
         </button>
       </form>
-
     </div>
   </div>
 
-  <!-- DRAWER DO CARRINHO DE COMPRAS -->
+  <!-- DRAWER DO CARRINHO / CHECKOUT DE COMPRA -->
   <div x-show="carrinhoAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end" x-cloak>
     <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between">
       <div class="p-5 border-b bg-gray-900 text-white flex justify-between items-center">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-bag-shopping text-rose-500 text-xl"></i>
-          <h3 class="font-bold text-lg">Seu Carrinho</h3>
+          <h3 class="font-bold text-lg">Seu Carrinho & Checkout</h3>
         </div>
         <button @click="carrinhoAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
@@ -185,10 +227,18 @@
 
         <template x-for="(item, index) in carrinho" :key="index">
           <div class="flex items-center space-x-3 border-b pb-3">
-            <img :src="item.imagem" class="w-16 h-16 object-cover rounded-xl border">
+            <img :src="item.imagens ? item.imagens[0] : item.imagem" class="w-16 h-16 object-cover rounded-xl border">
             <div class="flex-1">
               <h4 class="font-bold text-xs text-gray-900" x-text="item.nome"></h4>
-              <p class="text-xs font-bold text-rose-600 mt-0.5" x-text="'R$ ' + item.preco.toFixed(2)"></p>
+              
+              <!-- Exibição de Tamanho e Cor escolhidos -->
+              <div class="flex space-x-2 mt-1 text-[10px] text-gray-500">
+                <span>Tam: <strong class="text-gray-800" x-text="item.tamanho"></strong></span>
+                <span>•</span>
+                <span>Cor: <strong class="text-gray-800" x-text="item.cor"></strong></span>
+              </div>
+
+              <p class="text-xs font-bold text-rose-600 mt-1" x-text="'R$ ' + (item.preco * item.qtd).toFixed(2)"></p>
               
               <div class="flex items-center space-x-2 mt-2">
                 <button @click="alterarQtd(index, -1)" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-xs font-bold">-</button>
@@ -222,7 +272,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE CONTA (LOGIN / CADASTRO / AFILIADO / ADMIN EXCLUSIVO) -->
+  <!-- MODAL DE CONTA / PAINEL ADMIN / AFILIADO -->
   <div x-show="painelAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
     <div class="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       
@@ -369,76 +419,23 @@
                 <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Administrador Supremo</span>
               </div>
 
-              <!-- CONFIGURAÇÃO DO CHATBOT DE FAQS NO ADMIN -->
-              <div class="bg-amber-50/60 p-4 rounded-2xl border border-amber-200 space-y-3">
-                <h4 class="font-bold text-xs text-amber-900 flex items-center">
-                  <i class="fa-solid fa-robot text-amber-600 mr-2"></i>Perguntas e Respostas do Chatbot (FAQs)
-                </h4>
-                <div class="space-y-2">
-                  <template x-for="(faq, i) in faqsPadrao" :key="i">
-                    <div class="p-3 bg-white border rounded-xl space-y-1">
-                      <input type="text" x-model="faq.pergunta" class="w-full font-bold text-xs p-1 border-b outline-none">
-                      <textarea x-model="faq.resposta" class="w-full text-xs p-1 outline-none h-12 text-gray-600"></textarea>
-                    </div>
-                  </template>
-                </div>
-              </div>
-
-              <!-- INTEGRAÇÕES: MERCADO PAGO E FRETE -->
-              <div class="bg-rose-50/60 p-4 rounded-2xl border border-rose-200 space-y-4">
-                <h4 class="font-bold text-xs text-rose-900 flex items-center">
-                  <i class="fa-solid fa-credit-card text-rose-600 mr-2"></i>Configuração de Pagamento (Mercado Pago)
-                </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Public Key (Mercado Pago)</label>
-                    <input type="text" x-model="config.mercadopagoPublicKey" placeholder="APP_USR-..." class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                  </div>
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Access Token (Mercado Pago)</label>
-                    <input type="password" x-model="config.mercadopagoAccessToken" placeholder="APP_USR-..." class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                  </div>
-                </div>
-              </div>
-
-              <!-- INTEGRAÇÕES: FRETE -->
-              <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-4">
-                <h4 class="font-bold text-xs text-blue-900 flex items-center">
-                  <i class="fa-solid fa-truck-fast text-blue-600 mr-2"></i>Integração de Fretes e Logística
-                </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Plataforma de Frete Principal</label>
-                    <select x-model="config.freteEmpresa" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                      <option value="melhorenvio">Melhor Envio</option>
-                      <option value="frenet">Frenet API</option>
-                      <option value="correios">Correios Direct API</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Token da API de Frete</label>
-                    <input type="password" x-model="config.freteToken" placeholder="Cole o token da sua API" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                  </div>
-                </div>
-              </div>
-
-              <!-- GESTÃO DE BANNERS E LOGO -->
               <div class="bg-gray-50 p-4 rounded-2xl border space-y-3">
-                <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-image text-rose-600 mr-1.5"></i>Banners e Identidade Visual</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input type="text" x-model="config.logo" placeholder="URL do Logo" class="p-2 border rounded-xl text-xs bg-white">
-                  <input type="text" x-model="config.banner" placeholder="URL do Banner Principal" class="p-2 border rounded-xl text-xs bg-white">
-                </div>
-              </div>
-
-              <!-- GESTÃO DE PRODUTOS -->
-              <div class="bg-gray-50 p-4 rounded-2xl border space-y-3">
-                <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-plus-circle text-emerald-600 mr-1.5"></i>Cadastrar Novo Produto</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-plus-circle text-emerald-600 mr-1.5"></i>Cadastrar Novo Produto (até 5 Imagens)</h4>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <input type="text" x-model="novoProd.nome" placeholder="Nome do Produto" class="p-2 border rounded-xl text-xs bg-white">
                   <input type="number" x-model.number="novoProd.preco" placeholder="Preço (R$)" class="p-2 border rounded-xl text-xs bg-white">
-                  <input type="text" x-model="novoProd.imagem" placeholder="URL da Imagem" class="p-2 border rounded-xl text-xs bg-white">
                 </div>
+
+                <div class="space-y-1.5">
+                  <label class="text-[10px] font-bold text-gray-600">URLs das Imagens (Fotos para Rolar de lado):</label>
+                  <input type="text" x-model="novoProd.img1" placeholder="URL da Imagem 1 (Principal)" class="w-full p-2 border rounded-xl text-xs bg-white">
+                  <input type="text" x-model="novoProd.img2" placeholder="URL da Imagem 2 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
+                  <input type="text" x-model="novoProd.img3" placeholder="URL da Imagem 3 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
+                  <input type="text" x-model="novoProd.img4" placeholder="URL da Imagem 4 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
+                  <input type="text" x-model="novoProd.img5" placeholder="URL da Imagem 5 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
+                </div>
+
                 <textarea x-model="novoProd.descricao" placeholder="Descrição do produto..." class="w-full p-2 border rounded-xl text-xs bg-white h-16"></textarea>
                 <button @click="adicionarProduto()" class="w-full py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Cadastrar Produto</button>
               </div>
@@ -496,7 +493,6 @@
           freteToken: ''
         },
 
-        // FAQS PADRÃO DO CHATBOT DE CADA PRODUTO
         faqsPadrao: [
           { pergunta: 'Qual o tecido / material?', resposta: 'Nossos produtos são confeccionados em tecidos nobres como moletinho premium, alfaiataria e algodão macio de altíssima durabilidade.' },
           { pergunta: 'Tabela de Tamanhos', resposta: 'Trabalhamos com os tamanhos P (36/38), M (40), G (42) e GG (44). O caimento é anatômico e super confortável.' },
@@ -508,7 +504,7 @@
         mensagemChat: '',
         chatMensagens: [],
 
-        novoProd: { nome: '', preco: null, imagem: '', descricao: '' },
+        novoProd: { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' },
 
         produtos: [
           {
@@ -516,14 +512,28 @@
             nome: 'Conjunto Tati Moletinho Premium',
             preco: 189.90,
             descricao: 'Conjunto de moletinho super macio e elegante para o dia a dia.',
-            imagem: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600'
+            tamanhos: ['P', 'M', 'G', 'GG'],
+            cores: ['Rosa', 'Preto', 'Nude', 'Branco'],
+            imagens: [
+              'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600',
+              'https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=600',
+              'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=600',
+              'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=600',
+              'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?q=80&w=600'
+            ]
           },
           {
             id: 2,
             nome: 'Vestido Midi Elegance Alfaiataria',
             preco: 239.90,
             descricao: 'Vestido midi fluido de alfaiataria com corte impecável.',
-            imagem: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=600'
+            tamanhos: ['P', 'M', 'G'],
+            cores: ['Preto', 'Nude', 'Vinho'],
+            imagens: [
+              'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=600',
+              'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600',
+              'https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=600'
+            ]
           }
         ],
 
@@ -617,21 +627,23 @@
           this.painelAberto = false;
         },
 
-        adicionarAoCarrinho(prod) {
+        adicionarAoCarrinho(prod, cor, tamanho) {
           if (!this.usuario.logado) {
             alert('Para comprar na Dridalia, crie uma conta ou faça login primeiro.');
             this.modoConta = 'cadastro';
             this.painelAberto = true;
             return;
           }
-          const index = this.carrinho.findIndex(item => item.id === prod.id);
+
+          const index = this.carrinho.findIndex(item => item.id === prod.id && item.cor === cor && item.tamanho === tamanho);
           if (index > -1) {
             this.carrinho[index].qtd++;
           } else {
-            this.carrinho.push({ ...prod, qtd: 1 });
+            this.carrinho.push({ ...prod, cor: cor || 'Padrão', tamanho: tamanho || 'M', qtd: 1 });
           }
+
           this.salvarCarrinho();
-          this.carrinhoAberto = true;
+          this.carrinhoAberto = true; // ABRE O CARRINHO / CHECKOUT NA HORA
         },
 
         alterarQtd(index, valor) {
@@ -671,17 +683,32 @@
         },
 
         adicionarProduto() {
-          if (!this.novoProd.nome || !this.novoProd.preco || !this.novoProd.imagem) return;
-          this.produtos.push({ id: Date.now(), ...this.novoProd });
+          if (!this.novoProd.nome || !this.novoProd.preco || !this.novoProd.img1) {
+            alert('Por favor, preencha o nome, preço e pelo menos a imagem 1.');
+            return;
+          }
+
+          const imgs = [this.novoProd.img1, this.novoProd.img2, this.novoProd.img3, this.novoProd.img4, this.novoProd.img5].filter(Boolean);
+
+          this.produtos.push({
+            id: Date.now(),
+            nome: this.novoProd.nome,
+            preco: this.novoProd.preco,
+            descricao: this.novoProd.descricao,
+            tamanhos: ['P', 'M', 'G', 'GG'],
+            cores: ['Rosa', 'Preto', 'Nude'],
+            imagens: imgs
+          });
+
           localStorage.setItem('dridalia_produtos', JSON.stringify(this.produtos));
-          this.novoProd = { nome: '', preco: null, imagem: '', descricao: '' };
+          this.novoProd = { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' };
           alert('Produto cadastrado com sucesso!');
         },
 
         salvarConfiguracoes() {
           localStorage.setItem('dridalia_config', JSON.stringify(this.config));
           localStorage.setItem('dridalia_faqs', JSON.stringify(this.faqsPadrao));
-          alert('Configurações da loja e FAQs salvas com sucesso!');
+          alert('Configurações da loja salvas com sucesso!');
         },
 
         falarTexto(texto) {
