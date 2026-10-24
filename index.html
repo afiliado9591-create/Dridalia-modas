@@ -4,14 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- SEO DRIDALIA MODA FEMININA -->
   <title>Dridalia Moda Feminina | Loja Virtual Oficial</title>
   <meta name="description" content="Compre moda feminina elegante, conjuntos e lançamentos na Dridalia Moda Feminina.">
   
-  <!-- TAILWIND CSS & FONTAWESOME -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- ALPINE.JS -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
   <style>
@@ -42,8 +39,6 @@
   <!-- HEADER DRIDALIA MODA FEMININA -->
   <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-      
-      <!-- Logo e Marca -->
       <div class="flex items-center space-x-3 cursor-pointer" @click="painelAberto = false">
         <template x-if="config.logo">
           <img :src="config.logo" alt="Dridalia Logo" class="h-10 w-auto object-contain">
@@ -51,21 +46,17 @@
         <h1 class="text-xl font-bold tracking-tight text-gray-900 font-grife" x-text="config.nomeLoja"></h1>
       </div>
 
-      <!-- Menu de Ações -->
       <div class="flex items-center space-x-3 sm:space-x-4">
-        <!-- BOTÃO "MINHA CONTA" -->
         <button @click="clicarMinhaConta()" class="flex items-center space-x-2 text-xs sm:text-sm font-semibold text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 px-3.5 py-2 rounded-full transition">
           <i class="fa-solid fa-user-circle text-base text-rose-600"></i>
           <span x-text="usuario.logado ? usuario.nome : 'Entrar / Criar Conta'"></span>
         </button>
 
-        <!-- Carrinho de Compras -->
-        <button @click="carrinhoAberto = true" class="relative p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-full transition" aria-label="Abrir Carrinho">
+        <button @click="carrinhoAberto = true" class="relative p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-full transition">
           <i class="fa-solid fa-bag-shopping text-lg"></i>
           <span x-show="carrinho.length > 0" class="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white" x-text="carrinho.reduce((acc, item) => acc + item.qtd, 0)"></span>
         </button>
       </div>
-
     </div>
   </header>
 
@@ -80,7 +71,6 @@
       <template x-for="prod in produtos" :key="prod.id">
         <article class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-lg transition duration-300 relative">
           
-          <!-- Imagem + Ouvir Áudio -->
           <div class="relative aspect-product bg-gray-100 overflow-hidden">
             <img :src="prod.imagem" :alt="prod.nome" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
             
@@ -88,13 +78,11 @@
               <i class="fa-solid fa-volume-high text-xs"></i>
             </button>
 
-            <!-- Botão de Compartilhar Link de Afiliado -->
             <button x-show="usuario.logado" @click="compartilharProduto(prod)" class="absolute bottom-3 right-3 bg-rose-600 hover:bg-rose-700 text-white p-2.5 rounded-full shadow-md transition" title="Compartilhar com meu link de Afiliado">
               <i class="fa-solid fa-share-nodes text-xs"></i>
             </button>
           </div>
 
-          <!-- Informações do Produto -->
           <div class="p-4 flex-1 flex flex-col justify-between">
             <div>
               <h2 class="font-bold text-gray-900 text-base line-clamp-1" x-text="prod.nome"></h2>
@@ -105,12 +93,12 @@
               <span class="text-xl font-extrabold text-gray-900" x-text="'R$ ' + prod.preco.toFixed(2)"></span>
 
               <div class="grid grid-cols-2 gap-2 mt-3">
-                <button @click="falarTexto('Abertura do chat para dúvidas')" class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 transition">
-                  <i class="fa-solid fa-robot text-rose-600"></i>
+                <!-- BOTÃO DE DÚVIDAS / CHATBOT -->
+                <button @click="abrirChatbot(prod)" class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 transition">
+                  <i class="fa-solid fa-comments text-rose-600"></i>
                   <span>Dúvidas</span>
                 </button>
 
-                <!-- Adicionar ao Carrinho (Exige Conta) -->
                 <button @click="adicionarAoCarrinho(prod)" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 shadow transition">
                   <i class="fa-solid fa-cart-plus"></i>
                   <span>Comprar</span>
@@ -124,11 +112,61 @@
     </div>
   </main>
 
-  <!-- DRAWER / MODAL LATERAL DO CARRINHO DE COMPRAS -->
+  <!-- MODAL DO CHATBOT DE PERGUNTAS E RESPOSTAS (FAQ DO PRODUTO) -->
+  <div x-show="chatbotAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[580px]">
+      
+      <!-- Cabeçalho Chatbot -->
+      <div class="p-4 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-full bg-rose-600 flex items-center justify-center text-white font-bold text-sm">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm" x-text="produtoChat ? produtoChat.nome : 'Assistente Dridalia'"></h3>
+            <p class="text-[10px] text-emerald-400 flex items-center"><span class="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-1.5"></span>Atendente Virtual Online</p>
+          </div>
+        </div>
+        <button @click="chatbotAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <!-- Área de Mensagens do Chat -->
+      <div class="p-4 overflow-y-auto flex-1 space-y-3 bg-gray-50" id="chatContainer">
+        <template x-for="(msg, i) in chatMensagens" :key="i">
+          <div :class="msg.tipo === 'usuario' ? 'justify-end' : 'justify-start'" class="flex">
+            <div :class="msg.tipo === 'usuario' ? 'bg-rose-600 text-white rounded-br-none' : 'bg-white border text-gray-800 shadow-sm rounded-bl-none'" class="max-w-[80%] p-3 rounded-2xl text-xs space-y-1">
+              <p x-text="msg.texto" class="whitespace-pre-line"></p>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Opções de Perguntas Rápidas -->
+      <div class="p-2.5 bg-white border-t space-y-2">
+        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block px-1">Perguntas Frequentes:</span>
+        <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+          <template x-for="(faq, index) in faqsPadrao" :key="index">
+            <button @click="selecionarFaq(faq)" class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-full font-medium transition">
+              <span x-text="faq.pergunta"></span>
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <!-- Campo de Entrada do Chat -->
+      <form @submit.prevent="enviarMensagemLivre()" class="p-3 bg-white border-t flex items-center space-x-2">
+        <input type="text" x-model="mensagemChat" placeholder="Escreva sua dúvida aqui..." class="flex-1 p-2.5 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-rose-500">
+        <button type="submit" class="p-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow transition">
+          <i class="fa-solid fa-paper-plane text-xs"></i>
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- DRAWER DO CARRINHO DE COMPRAS -->
   <div x-show="carrinhoAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end" x-cloak>
     <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between">
-      
-      <!-- Cabeçalho do Carrinho -->
       <div class="p-5 border-b bg-gray-900 text-white flex justify-between items-center">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-bag-shopping text-rose-500 text-xl"></i>
@@ -137,7 +175,6 @@
         <button @click="carrinhoAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
 
-      <!-- Lista de Itens no Carrinho -->
       <div class="p-5 overflow-y-auto flex-1 space-y-4">
         <template x-if="carrinho.length === 0">
           <div class="text-center py-12 text-gray-400 space-y-3">
@@ -153,7 +190,6 @@
               <h4 class="font-bold text-xs text-gray-900" x-text="item.nome"></h4>
               <p class="text-xs font-bold text-rose-600 mt-0.5" x-text="'R$ ' + item.preco.toFixed(2)"></p>
               
-              <!-- Controle de Quantidade -->
               <div class="flex items-center space-x-2 mt-2">
                 <button @click="alterarQtd(index, -1)" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-xs font-bold">-</button>
                 <span class="text-xs font-bold" x-text="item.qtd"></span>
@@ -166,9 +202,7 @@
         </template>
       </div>
 
-      <!-- Rodapé do Carrinho -->
       <div class="p-5 border-t bg-gray-50 space-y-3" x-show="carrinho.length > 0">
-        <!-- Frete e Descontos -->
         <div class="space-y-1.5 text-xs text-gray-600">
           <div class="flex justify-between">
             <span>Subtotal:</span>
@@ -185,11 +219,10 @@
           <span>Finalizar Compra Segura</span>
         </button>
       </div>
-
     </div>
   </div>
 
-  <!-- MODAL DE CONTA (LOGIN / CADASTRO / PAINEL AFILIADO / ADMIN EXCLUSIVO) -->
+  <!-- MODAL DE CONTA (LOGIN / CADASTRO / AFILIADO / ADMIN EXCLUSIVO) -->
   <div x-show="painelAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
     <div class="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       
@@ -206,19 +239,16 @@
         <button @click="painelAberto = false" class="text-gray-400 hover:text-white p-2 transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
       </div>
 
-      <!-- BARRA DE ABAS QUANDO LOGADO -->
       <template x-if="usuario.logado">
         <div class="flex border-b border-gray-200 bg-gray-50 text-xs sm:text-sm overflow-x-auto">
           <button @click="abaPainel = 'compras'" :class="abaPainel === 'compras' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-white' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
             <i class="fa-solid fa-bag-shopping mr-1.5"></i>Minhas Compras
           </button>
 
-          <!-- PAINEL DE AFILIADO (AUTOMÁTICO PARA TODOS OS CLIENTES) -->
           <button @click="abaPainel = 'afiliado'" :class="abaPainel === 'afiliado' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-white' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
             <i class="fa-solid fa-sack-dollar mr-1.5 text-emerald-600"></i>Painel de Afiliado
           </button>
 
-          <!-- MENU ADMIN EXCLUSIVO (APENAS PARA SEU E-MAIL) -->
           <template x-if="usuario.email === adminEmail">
             <button @click="abaPainel = 'admin'" :class="abaPainel === 'admin' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-rose-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
               <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Painel Admin (Dono)
@@ -229,14 +259,9 @@
         </div>
       </template>
 
-      <!-- CONTEÚDO DA CONTA -->
       <div class="p-6 overflow-y-auto flex-1">
-        
-        <!-- FORMULÁRIOS SE NÃO ESTIVER LOGADO -->
         <template x-if="!usuario.logado">
           <div class="max-w-md mx-auto py-4 space-y-6">
-            
-            <!-- FORMULÁRIO DE LOGIN (E-mail e Senha) -->
             <div x-show="modoConta === 'login'" class="space-y-4">
               <div class="text-center">
                 <h3 class="text-xl font-bold text-gray-900">Entrar na Minha Conta</h3>
@@ -262,7 +287,6 @@
               </div>
             </div>
 
-            <!-- FORMULÁRIO DE CADASTRO (Nome, E-mail e Senha) -->
             <div x-show="modoConta === 'cadastro'" class="space-y-4">
               <div class="text-center">
                 <h3 class="text-xl font-bold text-gray-900">Criar Nova Conta</h3>
@@ -291,14 +315,11 @@
                 </p>
               </div>
             </div>
-
           </div>
         </template>
 
-        <!-- ÁREA INTERNA APÓS LOGAR -->
         <template x-if="usuario.logado">
           <div>
-            <!-- COMPRAS -->
             <div x-show="abaPainel === 'compras'" class="space-y-4">
               <h3 class="font-bold text-gray-900 text-base">Seus Pedidos</h3>
               <div class="bg-gray-50 border border-dashed rounded-2xl p-8 text-center text-xs text-gray-500">
@@ -307,7 +328,6 @@
               </div>
             </div>
 
-            <!-- PAINEL DE AFILIADO COMPLETO -->
             <div x-show="abaPainel === 'afiliado'" class="space-y-5">
               <div class="border-b pb-3">
                 <h3 class="text-lg font-bold text-gray-900 flex items-center">
@@ -316,7 +336,6 @@
                 <p class="text-xs text-gray-500 mt-0.5">Você já é um afiliado! Compartilhe seu link e receba comissões automáticas.</p>
               </div>
 
-              <!-- QUADROS DE GANHOS -->
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl">
                   <span class="text-[10px] font-bold text-emerald-800 uppercase">Comissões Acumuladas</span>
@@ -332,7 +351,6 @@
                 </div>
               </div>
 
-              <!-- LINK DE INDICAÇÃO DA LOJA -->
               <div class="bg-gray-50 border p-4 rounded-2xl space-y-2">
                 <label class="block text-xs font-semibold text-gray-700">Seu Link da Loja Completa</label>
                 <div class="flex space-x-2">
@@ -342,7 +360,6 @@
               </div>
             </div>
 
-            <!-- PAINEL ADMINISTRADOR COMPLETO DA LOJA (EXCLUSIVO JEAN) -->
             <div x-show="abaPainel === 'admin'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
                 <div>
@@ -350,6 +367,21 @@
                   <p class="text-xs text-gray-500">Gerencie produtos, integrações de frete e Mercado Pago.</p>
                 </div>
                 <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Administrador Supremo</span>
+              </div>
+
+              <!-- CONFIGURAÇÃO DO CHATBOT DE FAQS NO ADMIN -->
+              <div class="bg-amber-50/60 p-4 rounded-2xl border border-amber-200 space-y-3">
+                <h4 class="font-bold text-xs text-amber-900 flex items-center">
+                  <i class="fa-solid fa-robot text-amber-600 mr-2"></i>Perguntas e Respostas do Chatbot (FAQs)
+                </h4>
+                <div class="space-y-2">
+                  <template x-for="(faq, i) in faqsPadrao" :key="i">
+                    <div class="p-3 bg-white border rounded-xl space-y-1">
+                      <input type="text" x-model="faq.pergunta" class="w-full font-bold text-xs p-1 border-b outline-none">
+                      <textarea x-model="faq.resposta" class="w-full text-xs p-1 outline-none h-12 text-gray-600"></textarea>
+                    </div>
+                  </template>
+                </div>
               </div>
 
               <!-- INTEGRAÇÕES: MERCADO PAGO E FRETE -->
@@ -369,7 +401,7 @@
                 </div>
               </div>
 
-              <!-- INTEGRAÇÕES: EMPRESAS DE FRETE -->
+              <!-- INTEGRAÇÕES: FRETE -->
               <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-4">
                 <h4 class="font-bold text-xs text-blue-900 flex items-center">
                   <i class="fa-solid fa-truck-fast text-blue-600 mr-2"></i>Integração de Fretes e Logística
@@ -399,22 +431,6 @@
                 </div>
               </div>
 
-              <!-- GESTÃO DO POP-UP PROMOCIONAL -->
-              <div class="bg-gray-50 p-4 rounded-2xl border space-y-3">
-                <div class="flex items-center justify-between">
-                  <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-bullhorn text-amber-500 mr-1.5"></i>Pop-up Promocional</h4>
-                  <label class="flex items-center space-x-2 cursor-pointer text-xs font-semibold">
-                    <input type="checkbox" x-model="config.popupAtivo" class="rounded text-rose-600">
-                    <span>Ativar Pop-up</span>
-                  </label>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <input type="text" x-model="config.popupTitulo" placeholder="Título da Promoção" class="p-2 border rounded-xl text-xs bg-white">
-                  <input type="text" x-model="config.popupImagem" placeholder="URL da Imagem do Pop-up" class="p-2 border rounded-xl text-xs bg-white">
-                </div>
-                <textarea x-model="config.popupTexto" placeholder="Texto da promoção..." class="w-full p-2 border rounded-xl text-xs bg-white h-16"></textarea>
-              </div>
-
               <!-- GESTÃO DE PRODUTOS -->
               <div class="bg-gray-50 p-4 rounded-2xl border space-y-3">
                 <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-plus-circle text-emerald-600 mr-1.5"></i>Cadastrar Novo Produto</h4>
@@ -427,25 +443,20 @@
                 <button @click="adicionarProduto()" class="w-full py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Cadastrar Produto</button>
               </div>
 
-              <!-- BOTÃO DE SALVAR CONFIGURAÇÕES -->
-              <button @click="salvarConfiguracoes()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition">Salvar Alterações da Loja e APIs</button>
+              <button @click="salvarConfiguracoes()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition">Salvar Alterações da Loja</button>
             </div>
-
           </div>
         </template>
-
       </div>
     </div>
   </div>
 
-  <!-- RODAPÉ -->
   <footer class="bg-white border-t border-gray-200 py-8 mt-16 text-center text-xs text-gray-500">
     <div class="max-w-7xl mx-auto px-4">
       <p class="font-bold text-gray-800" x-text="config.nomeLoja + ' © 2026'"></p>
     </div>
   </footer>
 
-  <!-- SCRIPT APLICAÇÃO DRIDALIA -->
   <script>
     function dridaliaApp() {
       return {
@@ -455,8 +466,9 @@
         painelAberto: false,
         carrinhoAberto: false,
         popupVisivel: true,
-        modoConta: 'login', // 'login' ou 'cadastro'
-        abaPainel: 'compras', // 'compras', 'afiliado', 'admin'
+        chatbotAberto: false,
+        modoConta: 'login',
+        abaPainel: 'compras',
 
         formLogin: { email: '', senha: '' },
         formCadastro: { nome: '', email: '', senha: '' },
@@ -483,6 +495,18 @@
           freteEmpresa: 'melhorenvio',
           freteToken: ''
         },
+
+        // FAQS PADRÃO DO CHATBOT DE CADA PRODUTO
+        faqsPadrao: [
+          { pergunta: 'Qual o tecido / material?', resposta: 'Nossos produtos são confeccionados em tecidos nobres como moletinho premium, alfaiataria e algodão macio de altíssima durabilidade.' },
+          { pergunta: 'Tabela de Tamanhos', resposta: 'Trabalhamos com os tamanhos P (36/38), M (40), G (42) e GG (44). O caimento é anatômico e super confortável.' },
+          { pergunta: 'Prazo de Entrega', resposta: 'O prazo varia de acordo com o seu CEP, sendo enviado em até 24 horas úteis após a confirmação do pagamento.' },
+          { pergunta: 'Trocas e Devoluções', resposta: 'Garantimos troca grátis em até 7 dias após o recebimento do produto sem complicações.' }
+        ],
+
+        produtoChat: null,
+        mensagemChat: '',
+        chatMensagens: [],
 
         novoProd: { nome: '', preco: null, imagem: '', descricao: '' },
 
@@ -512,6 +536,9 @@
           const prods = localStorage.getItem('dridalia_produtos');
           if (prods) this.produtos = JSON.parse(prods);
 
+          const faqs = localStorage.getItem('dridalia_faqs');
+          if (faqs) this.faqsPadrao = JSON.parse(faqs);
+
           const sessao = localStorage.getItem('dridalia_sessao');
           if (sessao) this.usuario = JSON.parse(sessao);
 
@@ -519,16 +546,42 @@
           if (car) this.carrinho = JSON.parse(car);
         },
 
+        abrirChatbot(prod) {
+          this.produtoChat = prod;
+          this.chatMensagens = [
+            { tipo: 'bot', texto: `Olá! Sou a assistente da Dridalia. Como posso ajudar com o produto "${prod.nome}"?` }
+          ];
+          this.chatbotAberto = true;
+        },
+
+        selecionarFaq(faq) {
+          this.chatMensagens.push({ tipo: 'usuario', texto: faq.pergunta });
+          setTimeout(() => {
+            this.chatMensagens.push({ tipo: 'bot', texto: faq.resposta });
+          }, 300);
+        },
+
+        enviarMensagemLivre() {
+          if (!this.mensagemChat.trim()) return;
+          const texto = this.mensagemChat;
+          this.chatMensagens.push({ tipo: 'usuario', texto: texto });
+          this.mensagemChat = '';
+
+          setTimeout(() => {
+            this.chatMensagens.push({ 
+              tipo: 'bot', 
+              texto: `Obrigada por perguntar sobre "${this.produtoChat.nome}". Nossa equipe também pode te atender diretamente no WhatsApp se preferir!` 
+            });
+          }, 500);
+        },
+
         clicarMinhaConta() {
           this.painelAberto = true;
-          if (!this.usuario.logado) {
-            this.modoConta = 'login';
-          }
+          if (!this.usuario.logado) this.modoConta = 'login';
         },
 
         fazerLogin() {
           if (!this.formLogin.email || !this.formLogin.senha) return;
-
           const codAfiliado = 'DRI-' + Math.random().toString(36).substring(2, 7).toUpperCase();
           this.usuario = {
             logado: true,
@@ -538,14 +591,12 @@
             ganhosAfiliado: 0,
             vendasAfiliado: 0
           };
-
           localStorage.setItem('dridalia_sessao', JSON.stringify(this.usuario));
           this.formLogin = { email: '', senha: '' };
         },
 
         fazerCadastro() {
           if (!this.formCadastro.nome || !this.formCadastro.email || !this.formCadastro.senha) return;
-
           const codAfiliado = 'DRI-' + Math.random().toString(36).substring(2, 7).toUpperCase();
           this.usuario = {
             logado: true,
@@ -555,7 +606,6 @@
             ganhosAfiliado: 0,
             vendasAfiliado: 0
           };
-
           localStorage.setItem('dridalia_sessao', JSON.stringify(this.usuario));
           this.formCadastro = { nome: '', email: '', senha: '' };
           alert('Conta criada com sucesso! Você já é um afiliado Dridalia.');
@@ -574,14 +624,12 @@
             this.painelAberto = true;
             return;
           }
-
           const index = this.carrinho.findIndex(item => item.id === prod.id);
           if (index > -1) {
             this.carrinho[index].qtd++;
           } else {
             this.carrinho.push({ ...prod, qtd: 1 });
           }
-
           this.salvarCarrinho();
           this.carrinhoAberto = true;
         },
@@ -632,7 +680,8 @@
 
         salvarConfiguracoes() {
           localStorage.setItem('dridalia_config', JSON.stringify(this.config));
-          alert('Configurações da loja e integrações salvas com sucesso!');
+          localStorage.setItem('dridalia_faqs', JSON.stringify(this.faqsPadrao));
+          alert('Configurações da loja e FAQs salvas com sucesso!');
         },
 
         falarTexto(texto) {
