@@ -22,9 +22,9 @@
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased font-sans" x-data="dridaliaApp()">
 
-  <!-- POP-UP PROMOCIONAL (CONFIGURADO PELO ADMIN) -->
+  <!-- POP-UP PROMOCIONAL -->
   <div x-show="config.popupAtivo && popupVisivel" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
-    <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative animate-bounce-short">
+    <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative">
       <button @click="popupVisivel = false" class="absolute top-3 right-3 bg-gray-900/60 hover:bg-gray-900 text-white w-8 h-8 rounded-full flex items-center justify-center z-10">
         <i class="fa-solid fa-xmark"></i>
       </button>
@@ -54,15 +54,15 @@
       <!-- Menu de Ações -->
       <div class="flex items-center space-x-3 sm:space-x-4">
         <!-- BOTÃO "MINHA CONTA" -->
-        <button @click="clicarMinhaConta()" class="flex items-center space-x-2 text-xs sm:text-sm font-semibold text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-full transition">
+        <button @click="clicarMinhaConta()" class="flex items-center space-x-2 text-xs sm:text-sm font-semibold text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 px-3.5 py-2 rounded-full transition">
           <i class="fa-solid fa-user-circle text-base text-rose-600"></i>
-          <span x-text="usuario.logado ? 'Minha Conta' : 'Entrar / Criar Conta'"></span>
+          <span x-text="usuario.logado ? usuario.nome : 'Entrar / Criar Conta'"></span>
         </button>
 
         <!-- Carrinho de Compras -->
-        <button @click="carrinhoAberto = true" class="relative p-2 text-gray-700 hover:text-black transition" aria-label="Abrir Carrinho">
-          <i class="fa-solid fa-bag-shopping text-xl"></i>
-          <span x-show="carrinho.length > 0" class="absolute -top-1 -right-1 bg-rose-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full" x-text="carrinho.reduce((acc, item) => acc + item.qtd, 0)"></span>
+        <button @click="carrinhoAberto = true" class="relative p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-full transition" aria-label="Abrir Carrinho">
+          <i class="fa-solid fa-bag-shopping text-lg"></i>
+          <span x-show="carrinho.length > 0" class="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white" x-text="carrinho.reduce((acc, item) => acc + item.qtd, 0)"></span>
         </button>
       </div>
 
@@ -80,7 +80,7 @@
       <template x-for="prod in produtos" :key="prod.id">
         <article class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-lg transition duration-300 relative">
           
-          <!-- Imagem + Voz -->
+          <!-- Imagem + Ouvir Áudio -->
           <div class="relative aspect-product bg-gray-100 overflow-hidden">
             <img :src="prod.imagem" :alt="prod.nome" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
             
@@ -88,7 +88,7 @@
               <i class="fa-solid fa-volume-high text-xs"></i>
             </button>
 
-            <!-- Botão de Compartilhar Link de Afiliado (Apenas para Usuários Logados) -->
+            <!-- Botão de Compartilhar Link de Afiliado -->
             <button x-show="usuario.logado" @click="compartilharProduto(prod)" class="absolute bottom-3 right-3 bg-rose-600 hover:bg-rose-700 text-white p-2.5 rounded-full shadow-md transition" title="Compartilhar com meu link de Afiliado">
               <i class="fa-solid fa-share-nodes text-xs"></i>
             </button>
@@ -105,13 +105,13 @@
               <span class="text-xl font-extrabold text-gray-900" x-text="'R$ ' + prod.preco.toFixed(2)"></span>
 
               <div class="grid grid-cols-2 gap-2 mt-3">
-                <button @click="abrirChatbot(prod)" class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 transition">
+                <button @click="falarTexto('Abertura do chat para dúvidas')" class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 transition">
                   <i class="fa-solid fa-robot text-rose-600"></i>
                   <span>Dúvidas</span>
                 </button>
 
-                <!-- Comprar exige conta antes -->
-                <button @click="comprarProduto(prod)" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 shadow transition">
+                <!-- Adicionar ao Carrinho (Exige Conta) -->
+                <button @click="adicionarAoCarrinho(prod)" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 shadow transition">
                   <i class="fa-solid fa-cart-plus"></i>
                   <span>Comprar</span>
                 </button>
@@ -124,18 +124,74 @@
     </div>
   </main>
 
-  <!-- BOTÕES FLUTUANTES DINÂMICOS -->
-  <div class="fixed bottom-6 right-6 z-40 flex flex-col space-y-3">
-    <template x-for="btn in botoesFlutuantes" :key="btn.id">
-      <a :href="btn.link" target="_blank" :title="btn.nome" class="w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white text-xl transition transform hover:scale-110" :style="'background-color: ' + btn.cor">
-        <i :class="btn.icone"></i>
-      </a>
-    </template>
+  <!-- DRAWER / MODAL LATERAL DO CARRINHO DE COMPRAS -->
+  <div x-show="carrinhoAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end" x-cloak>
+    <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between">
+      
+      <!-- Cabeçalho do Carrinho -->
+      <div class="p-5 border-b bg-gray-900 text-white flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-bag-shopping text-rose-500 text-xl"></i>
+          <h3 class="font-bold text-lg">Seu Carrinho</h3>
+        </div>
+        <button @click="carrinhoAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <!-- Lista de Itens no Carrinho -->
+      <div class="p-5 overflow-y-auto flex-1 space-y-4">
+        <template x-if="carrinho.length === 0">
+          <div class="text-center py-12 text-gray-400 space-y-3">
+            <i class="fa-solid fa-basket-shopping text-4xl"></i>
+            <p class="text-sm">Seu carrinho está vazio.</p>
+          </div>
+        </template>
+
+        <template x-for="(item, index) in carrinho" :key="index">
+          <div class="flex items-center space-x-3 border-b pb-3">
+            <img :src="item.imagem" class="w-16 h-16 object-cover rounded-xl border">
+            <div class="flex-1">
+              <h4 class="font-bold text-xs text-gray-900" x-text="item.nome"></h4>
+              <p class="text-xs font-bold text-rose-600 mt-0.5" x-text="'R$ ' + item.preco.toFixed(2)"></p>
+              
+              <!-- Controle de Quantidade -->
+              <div class="flex items-center space-x-2 mt-2">
+                <button @click="alterarQtd(index, -1)" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-xs font-bold">-</button>
+                <span class="text-xs font-bold" x-text="item.qtd"></span>
+                <button @click="alterarQtd(index, 1)" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-xs font-bold">+</button>
+              </div>
+            </div>
+
+            <button @click="removerDoCarrinho(index)" class="text-gray-400 hover:text-red-500 p-2"><i class="fa-solid fa-trash-can text-sm"></i></button>
+          </div>
+        </template>
+      </div>
+
+      <!-- Rodapé do Carrinho -->
+      <div class="p-5 border-t bg-gray-50 space-y-3" x-show="carrinho.length > 0">
+        <!-- Frete e Descontos -->
+        <div class="space-y-1.5 text-xs text-gray-600">
+          <div class="flex justify-between">
+            <span>Subtotal:</span>
+            <span class="font-bold text-gray-900" x-text="'R$ ' + calcularSubtotal().toFixed(2)"></span>
+          </div>
+          <div class="flex justify-between items-center pt-1 border-t">
+            <span class="font-bold text-sm text-gray-900">Total:</span>
+            <span class="font-black text-lg text-rose-600" x-text="'R$ ' + calcularSubtotal().toFixed(2)"></span>
+          </div>
+        </div>
+
+        <button @click="finalizarCompra()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-lock text-sm"></i>
+          <span>Finalizar Compra Segura</span>
+        </button>
+      </div>
+
+    </div>
   </div>
 
-  <!-- MODAL DE CONTA (LOGIN / CADASTRO / PAINEL AFILIADO / ADMIN) -->
+  <!-- MODAL DE CONTA (LOGIN / CADASTRO / PAINEL AFILIADO / ADMIN EXCLUSIVO) -->
   <div x-show="painelAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
-    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div class="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       
       <div class="p-5 bg-gray-900 text-white flex justify-between items-center">
         <div class="flex items-center space-x-3">
@@ -150,7 +206,7 @@
         <button @click="painelAberto = false" class="text-gray-400 hover:text-white p-2 transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
       </div>
 
-      <!-- Abas quando LOGADO -->
+      <!-- BARRA DE ABAS QUANDO LOGADO -->
       <template x-if="usuario.logado">
         <div class="flex border-b border-gray-200 bg-gray-50 text-xs sm:text-sm overflow-x-auto">
           <button @click="abaPainel = 'compras'" :class="abaPainel === 'compras' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-white' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
@@ -162,10 +218,10 @@
             <i class="fa-solid fa-sack-dollar mr-1.5 text-emerald-600"></i>Painel de Afiliado
           </button>
 
-          <!-- PAINEL ADMIN (APENAS PARA O DONO DA LOJA) -->
+          <!-- MENU ADMIN EXCLUSIVO (APENAS PARA SEU E-MAIL) -->
           <template x-if="usuario.email === adminEmail">
             <button @click="abaPainel = 'admin'" :class="abaPainel === 'admin' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-rose-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
-              <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Painel Admin
+              <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Painel Admin (Dono)
             </button>
           </template>
 
@@ -173,7 +229,7 @@
         </div>
       </template>
 
-      <!-- Conteúdo Interno -->
+      <!-- CONTEÚDO DA CONTA -->
       <div class="p-6 overflow-y-auto flex-1">
         
         <!-- FORMULÁRIOS SE NÃO ESTIVER LOGADO -->
@@ -255,7 +311,7 @@
             <div x-show="abaPainel === 'afiliado'" class="space-y-5">
               <div class="border-b pb-3">
                 <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                  <i class="fa-solid fa-sack-dollar text-emerald-600 mr-2"></i>Seu Painel de Afiliado Dridalia
+                  <i class="fa-solid fa-sack-dollar text-emerald-600 mr-2"></i>Seu Painel de Afiliado
                 </h3>
                 <p class="text-xs text-gray-500 mt-0.5">Você já é um afiliado! Compartilhe seu link e receba comissões automáticas.</p>
               </div>
@@ -286,11 +342,52 @@
               </div>
             </div>
 
-            <!-- PAINEL ADMINISTRADOR COMPLETO DA LOJA -->
+            <!-- PAINEL ADMINISTRADOR COMPLETO DA LOJA (EXCLUSIVO JEAN) -->
             <div x-show="abaPainel === 'admin'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
-                <h3 class="font-bold text-gray-900 text-base">Gerenciamento Geral da Loja</h3>
-                <span class="bg-rose-100 text-rose-800 text-[10px] px-2.5 py-1 rounded-full font-bold">Administrador</span>
+                <div>
+                  <h3 class="font-bold text-gray-900 text-lg">Painel de Controle Administrador</h3>
+                  <p class="text-xs text-gray-500">Gerencie produtos, integrações de frete e Mercado Pago.</p>
+                </div>
+                <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Administrador Supremo</span>
+              </div>
+
+              <!-- INTEGRAÇÕES: MERCADO PAGO E FRETE -->
+              <div class="bg-rose-50/60 p-4 rounded-2xl border border-rose-200 space-y-4">
+                <h4 class="font-bold text-xs text-rose-900 flex items-center">
+                  <i class="fa-solid fa-credit-card text-rose-600 mr-2"></i>Configuração de Pagamento (Mercado Pago)
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Public Key (Mercado Pago)</label>
+                    <input type="text" x-model="config.mercadopagoPublicKey" placeholder="APP_USR-..." class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                  </div>
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Access Token (Mercado Pago)</label>
+                    <input type="password" x-model="config.mercadopagoAccessToken" placeholder="APP_USR-..." class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                  </div>
+                </div>
+              </div>
+
+              <!-- INTEGRAÇÕES: EMPRESAS DE FRETE -->
+              <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-4">
+                <h4 class="font-bold text-xs text-blue-900 flex items-center">
+                  <i class="fa-solid fa-truck-fast text-blue-600 mr-2"></i>Integração de Fretes e Logística
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Plataforma de Frete Principal</label>
+                    <select x-model="config.freteEmpresa" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                      <option value="melhorenvio">Melhor Envio</option>
+                      <option value="frenet">Frenet API</option>
+                      <option value="correios">Correios Direct API</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Token da API de Frete</label>
+                    <input type="password" x-model="config.freteToken" placeholder="Cole o token da sua API" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                  </div>
+                </div>
               </div>
 
               <!-- GESTÃO DE BANNERS E LOGO -->
@@ -330,8 +427,8 @@
                 <button @click="adicionarProduto()" class="w-full py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Cadastrar Produto</button>
               </div>
 
-              <!-- BOTÃO DE SALVAR GERAL -->
-              <button @click="salvarConfiguracoes()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow transition">Salvar Alterações da Loja</button>
+              <!-- BOTÃO DE SALVAR CONFIGURAÇÕES -->
+              <button @click="salvarConfiguracoes()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition">Salvar Alterações da Loja e APIs</button>
             </div>
 
           </div>
@@ -352,7 +449,6 @@
   <script>
     function dridaliaApp() {
       return {
-        // SUAS CONFIGURAÇÕES DA CLOUDFLARE E ADMIN
         WORKER_URL: 'https://dridalia-api.bmlimp8.workers.dev',
         adminEmail: 'jeanaguiar636@gmail.com',
 
@@ -381,13 +477,12 @@
           popupAtivo: true,
           popupTitulo: 'Oferta Especial de Boas-Vindas!',
           popupTexto: 'Use o cupom BEMVINDA e ganhe 10% de desconto no seu primeiro pedido.',
-          popupImagem: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600'
+          popupImagem: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600',
+          mercadopagoPublicKey: '',
+          mercadopagoAccessToken: '',
+          freteEmpresa: 'melhorenvio',
+          freteToken: ''
         },
-
-        botoesFlutuantes: [
-          { id: 1, nome: 'WhatsApp', icone: 'fa-brands fa-whatsapp', link: 'https://wa.me/5500000000000', cor: '#25D366' },
-          { id: 2, nome: 'Zap Leve', icone: 'fa-solid fa-bolt', link: 'https://zapleve.com', cor: '#4F46E5' }
-        ],
 
         novoProd: { nome: '', preco: null, imagem: '', descricao: '' },
 
@@ -418,9 +513,10 @@
           if (prods) this.produtos = JSON.parse(prods);
 
           const sessao = localStorage.getItem('dridalia_sessao');
-          if (sessao) {
-            this.usuario = JSON.parse(sessao);
-          }
+          if (sessao) this.usuario = JSON.parse(sessao);
+
+          const car = localStorage.getItem('dridalia_carrinho');
+          if (car) this.carrinho = JSON.parse(car);
         },
 
         clicarMinhaConta() {
@@ -437,7 +533,7 @@
           this.usuario = {
             logado: true,
             nome: this.formLogin.email.split('@')[0],
-            email: this.formLogin.email,
+            email: this.formLogin.email.toLowerCase(),
             codigoAfiliado: codAfiliado,
             ganhosAfiliado: 0,
             vendasAfiliado: 0
@@ -454,7 +550,7 @@
           this.usuario = {
             logado: true,
             nome: this.formCadastro.nome,
-            email: this.formCadastro.email,
+            email: this.formCadastro.email.toLowerCase(),
             codigoAfiliado: codAfiliado,
             ganhosAfiliado: 0,
             vendasAfiliado: 0
@@ -471,15 +567,49 @@
           this.painelAberto = false;
         },
 
-        comprarProduto(prod) {
+        adicionarAoCarrinho(prod) {
           if (!this.usuario.logado) {
-            alert('Para realizar compras na Dridalia, crie uma conta ou faça login primeiro.');
+            alert('Para comprar na Dridalia, crie uma conta ou faça login primeiro.');
             this.modoConta = 'cadastro';
             this.painelAberto = true;
             return;
           }
-          this.carrinho.push({ ...prod, qtd: 1 });
-          alert('Produto adicionado ao seu carrinho!');
+
+          const index = this.carrinho.findIndex(item => item.id === prod.id);
+          if (index > -1) {
+            this.carrinho[index].qtd++;
+          } else {
+            this.carrinho.push({ ...prod, qtd: 1 });
+          }
+
+          this.salvarCarrinho();
+          this.carrinhoAberto = true;
+        },
+
+        alterarQtd(index, valor) {
+          this.carrinho[index].qtd += valor;
+          if (this.carrinho[index].qtd <= 0) {
+            this.removerDoCarrinho(index);
+          } else {
+            this.salvarCarrinho();
+          }
+        },
+
+        removerDoCarrinho(index) {
+          this.carrinho.splice(index, 1);
+          this.salvarCarrinho();
+        },
+
+        calcularSubtotal() {
+          return this.carrinho.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
+        },
+
+        salvarCarrinho() {
+          localStorage.setItem('dridalia_carrinho', JSON.stringify(this.carrinho));
+        },
+
+        finalizarCompra() {
+          alert('Redirecionando para o Checkout com Mercado Pago e cálculo de frete...');
         },
 
         compartilharProduto(prod) {
@@ -502,7 +632,7 @@
 
         salvarConfiguracoes() {
           localStorage.setItem('dridalia_config', JSON.stringify(this.config));
-          alert('Configurações da loja salvas com sucesso!');
+          alert('Configurações da loja e integrações salvas com sucesso!');
         },
 
         falarTexto(texto) {
