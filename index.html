@@ -189,7 +189,7 @@
         <input x-model="f.email" type="email" placeholder="E-mail" class="w-full p-3 border rounded-xl text-sm">
         <input x-model="f.senha" type="password" placeholder="Senha (mín. 6)" class="w-full p-3 border rounded-xl text-sm" @keyup.enter="entrar()">
         <p x-show="erro" class="text-red-600" x-text="erro"></p>
-        <button @click="entrar()" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl" x-text="modo==='login'?'Entrar':'Cadastrar'"></button>
+        <button @click="entrar()" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl" x-text="ocupado?'Aguarde...':(modo==='login'?'Entrar':'Cadastrar')" :disabled="ocupado"></button>
         <p class="text-center text-gray-600" x-show="modo==='login'">Sem conta? <button @click="modo='cadastro';erro=''" class="text-rose-600 font-bold underline">Criar conta</button></p>
         <p class="text-center text-gray-600" x-show="modo==='cadastro'">Já tem conta? <button @click="modo='login';erro=''" class="text-rose-600 font-bold underline">Entrar</button></p>
       </div>
@@ -254,7 +254,7 @@ const API='https://dridalia-api.bmlimp8.workers.dev/api/';
 function loja(){return{
   cfg:{nomeLoja:'Dridalia Moda Feminina',logo:'',banner:'',popupAtivo:false,popupTag:'',popupTitulo:'',popupTexto:'',popupImagem:'',popupProdutoId:null},
   produtos:[],paginas:[],user:null,carregando:true,
-  menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,
+  menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,ocupado:false,
   f:{nome:'',email:'',senha:''},itens:[],frete:15,
   end:{nome:'',email:'',cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''},
   pf:{id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:['','','','','']},
@@ -269,7 +269,9 @@ function loja(){return{
   async api(path,method='GET',body){
     const h={};const t=localStorage.getItem('dri_token');if(t)h.authorization='Bearer '+t;
     let b;if(body instanceof File){b=body;h['content-type']=body.type}else if(body){b=JSON.stringify(body);h['content-type']='application/json'}
-    const r=await fetch(API+path,{method,headers:h,body:b});const d=await r.json().catch(()=>({}));
+    const ac=new AbortController(),to=setTimeout(()=>ac.abort(),15000);let r;
+    try{r=await fetch(API+path,{method,headers:h,body:b,signal:ac.signal})}catch(e){throw new Error(e.name==='AbortError'?'Demorou demais. Tente de novo.':'Sem conexão com o servidor.')}finally{clearTimeout(to)}
+    const d=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(d.erro||'Erro '+r.status);return d},
 
   async init(){
@@ -282,9 +284,9 @@ function loja(){return{
   },
   brl(v){return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})},
   // auth
-  async entrar(){this.erro='';try{
+  async entrar(){if(this.ocupado)return;this.erro='';this.ocupado=true;try{
     const d=await this.api(this.modo==='login'?'login':'register','POST',this.f);
-    localStorage.setItem('dri_token',d.token);this.user=d.user;this.f={nome:'',email:'',senha:''};this.aba='afiliado'}catch(e){this.erro=e.message}},
+    localStorage.setItem('dri_token',d.token);this.user=d.user;this.f={nome:'',email:'',senha:''};this.aba='afiliado'}catch(e){this.erro=e.message}this.ocupado=false},
   async sair(){try{await this.api('logout','POST')}catch(e){}localStorage.removeItem('dri_token');this.user=null;this.conta=false},
   // carrinho
   add(p,cor,tam){const i=this.itens.findIndex(x=>x.id===p.id&&x.cor===cor&&x.tam===tam);
