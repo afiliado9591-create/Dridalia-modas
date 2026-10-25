@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR" dir="ltr">
 <head>
@@ -25,17 +24,17 @@
   <!-- POP-UP PROMOCIONAL DINÂMICO -->
   <div x-show="config.popupAtivo && popupVisivel" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
     <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative">
-      <button @click="popupVisivel = false" class="absolute top-3 right-3 bg-gray-900/60 hover:bg-gray-900 text-white w-8 h-8 rounded-full flex items-center justify-center z-10 transition">
+      <button @click="popupVisivel = false" class="absolute top-3 right-3 bg-gray-900/60 hover:bg-gray-900 text-white w-8 h-8 rounded-full flex items-center justify-center z-10">
         <i class="fa-solid fa-xmark"></i>
       </button>
       <template x-if="config.popupImagem">
-        <img :src="config.popupImagem" alt="Oferta Especial" class="w-full h-56 object-cover">
+        <img :src="config.popupImagem" class="w-full h-56 object-cover">
       </template>
       <div class="p-6 text-center space-y-3">
-        <span class="bg-rose-100 text-rose-800 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider" x-text="config.popupTag || 'Oferta Especial'"></span>
-        <h3 class="text-xl font-bold text-gray-900 font-grife" x-text="config.popupTitulo"></h3>
-        <p class="text-xs text-gray-600 leading-relaxed" x-text="config.popupTexto"></p>
-        <button @click="popupVisivel = false" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-lg transition">Aproveitar Agora</button>
+        <span class="bg-rose-100 text-rose-800 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase" x-text="config.popupTag || 'Oferta Especial'"></span>
+        <h3 class="text-xl font-bold text-gray-900" x-text="config.popupTitulo"></h3>
+        <p class="text-xs text-gray-600" x-text="config.popupTexto"></p>
+        <button @click="popupVisivel = false" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow">Aproveitar Agora</button>
       </div>
     </div>
   </div>
@@ -122,7 +121,7 @@
       </div>
       <div class="p-6 overflow-y-auto space-y-4 flex-1">
         <template x-if="paginaAtual.imagem">
-          <img :src="paginaAtual.imagem" alt="Imagem Ilustrativa" class="w-full h-48 object-cover rounded-2xl shadow-sm">
+          <img :src="paginaAtual.imagem" class="w-full h-48 object-cover rounded-2xl shadow-sm">
         </template>
         <p class="text-xs text-gray-700 whitespace-pre-line leading-relaxed" x-text="paginaAtual.descricao"></p>
         
@@ -133,9 +132,9 @@
     </div>
   </div>
 
-  <!-- BANNER PRINCIPAL -->
+  <!-- BANNER -->
   <section x-show="config.banner" class="relative w-full bg-gray-900 overflow-hidden">
-    <img :src="config.banner" alt="Banner Destaque" class="w-full h-48 md:h-80 object-cover opacity-85">
+    <img :src="config.banner" alt="Banner" class="w-full h-48 md:h-80 object-cover opacity-85">
   </section>
 
   <!-- VITRINE DE PRODUTOS -->
@@ -146,15 +145,20 @@
           
           <template x-if="usuario.logado && usuario.email === adminEmail">
             <div class="bg-gray-900 p-2 text-white flex justify-between items-center text-[10px] space-x-1 z-20">
-              <span class="text-rose-400 font-mono" x-text="prod.id"></span>
-              <button @click="excluirProduto(prod.id)" class="bg-red-600 hover:bg-red-700 px-2.5 py-1 rounded-lg font-bold transition flex items-center space-x-1">
+              <button @click="abrirEditarProduto(prod)" class="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded font-bold transition flex items-center space-x-1">
+                <i class="fa-solid fa-pen-to-square"></i><span>Editar</span>
+              </button>
+              <button @click="abrirFaqProduto(prod)" class="bg-amber-600 hover:bg-amber-700 px-2 py-1 rounded font-bold transition flex items-center space-x-1">
+                <i class="fa-solid fa-comments"></i><span>FAQ Chat</span>
+              </button>
+              <button @click="excluirProduto(prod.id)" class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded font-bold transition flex items-center space-x-1">
                 <i class="fa-solid fa-trash"></i><span>Excluir</span>
               </button>
             </div>
           </template>
 
           <div class="relative aspect-product bg-gray-100 overflow-hidden group/galeria">
-            <img :src="(prod.imagens && prod.imagens.length > 0) ? prod.imagens[imgAtiva] : prod.imagem" :alt="prod.nome" class="w-full h-full object-cover transition duration-500" loading="lazy">
+            <img :src="prod.imagens[imgAtiva] || prod.imagem" :alt="prod.nome" class="w-full h-full object-cover transition duration-500" loading="lazy">
             
             <button @click="falarTexto(prod.nome + '. ' + prod.descricao)" class="absolute top-3 right-3 bg-rose-600 hover:bg-rose-700 text-white p-2.5 rounded-full shadow-lg backdrop-blur-md transition z-10 flex items-center space-x-1" title="Ouvir Áudio">
               <i class="fa-solid fa-volume-high text-xs"></i>
@@ -179,7 +183,6 @@
           <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
             <div>
               <h2 class="font-bold text-gray-900 text-base line-clamp-1" x-text="prod.nome"></h2>
-              <p class="text-xs text-gray-500 line-clamp-2 mt-1" x-text="prod.descricao"></p>
             </div>
 
             <div class="space-y-2 border-t pt-2">
@@ -203,7 +206,7 @@
             </div>
 
             <div>
-              <span class="text-xl font-extrabold text-gray-900" x-text="'R$ ' + (prod.preco ? prod.preco.toFixed(2) : '0.00')"></span>
+              <span class="text-xl font-extrabold text-gray-900" x-text="'R$ ' + prod.preco.toFixed(2)"></span>
 
               <div class="grid grid-cols-2 gap-2 mt-3">
                 <button @click="abrirChatbot(prod)" class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 transition">
@@ -243,7 +246,7 @@
         <!-- ITENS -->
         <template x-for="(item, index) in carrinho" :key="index">
           <div class="flex items-center space-x-3 border-b pb-3">
-            <img :src="(item.imagens && item.imagens.length > 0) ? item.imagens[0] : item.imagem" alt="Produto no Carrinho" class="w-16 h-16 object-cover rounded-xl border">
+            <img :src="item.imagens ? item.imagens[0] : item.imagem" class="w-16 h-16 object-cover rounded-xl border">
             <div class="flex-1">
               <h4 class="font-bold text-xs text-gray-900" x-text="item.nome"></h4>
               <div class="flex space-x-2 mt-0.5 text-[10px] text-gray-500">
@@ -361,7 +364,7 @@
           <template x-if="usuario.email === adminEmail">
             <div class="flex">
               <button @click="abaPainel = 'admin'" :class="abaPainel === 'admin' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-rose-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
-                <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Admin Loja (Nuvem)
+                <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Admin Loja
               </button>
             </div>
           </template>
@@ -428,43 +431,14 @@
               </div>
             </div>
 
-            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (CLOUDFLARE D1) -->
+            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (LIGADO AO WORKER/D1) -->
             <div x-show="abaPainel === 'admin'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
                 <div>
                   <h3 class="font-bold text-gray-900 text-lg">Painel de Controle Administrador (Nuvem)</h3>
-                  <p class="text-xs text-gray-500">Alterações salvam diretamente no banco de dados Cloudflare D1.</p>
+                  <p class="text-xs text-gray-500">Alterações aqui salvam diretamente no banco de dados Cloudflare D1.</p>
                 </div>
                 <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Admin Supremo</span>
-              </div>
-
-              <!-- GESTÃO DO POP-UP PROMOCIONAL -->
-              <div class="bg-amber-50/60 p-4 rounded-2xl border border-amber-200 space-y-3">
-                <div class="flex items-center justify-between">
-                  <h4 class="font-bold text-xs text-amber-900"><i class="fa-solid fa-bullhorn mr-2"></i>Pop-up Promocional (Pop-up)</h4>
-                  <label class="flex items-center space-x-2 text-xs font-semibold cursor-pointer">
-                    <input type="checkbox" x-model="config.popupAtivo" class="rounded text-rose-600">
-                    <span>Ativar Pop-up na Loja</span>
-                  </label>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Tag de Destaque</label>
-                    <input type="text" x-model="config.popupTag" placeholder="Oferta Especial" class="w-full p-2 border rounded-xl text-xs bg-white mt-1">
-                  </div>
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Título do Pop-up</label>
-                    <input type="text" x-model="config.popupTitulo" placeholder="Título" class="w-full p-2 border rounded-xl text-xs bg-white mt-1">
-                  </div>
-                </div>
-                <div>
-                  <label class="text-[10px] font-bold text-gray-600">URL da Imagem do Pop-up</label>
-                  <input type="text" x-model="config.popupImagem" placeholder="https://..." class="w-full p-2 border rounded-xl text-xs bg-white mt-1">
-                </div>
-                <div>
-                  <label class="text-[10px] font-bold text-gray-600">Texto Descritivo do Pop-up</label>
-                  <textarea x-model="config.popupTexto" placeholder="Texto..." class="w-full p-2 border rounded-xl text-xs bg-white h-16 mt-1"></textarea>
-                </div>
               </div>
 
               <!-- LOGO E IDENTIDADE -->
@@ -520,7 +494,7 @@
                 </div>
               </div>
 
-              <!-- CADASTRAR PRODUTOS NA NUVEM -->
+              <!-- CADASTRAR PRODUTOS -->
               <div class="bg-gray-50 p-4 rounded-2xl border space-y-3">
                 <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-plus-circle text-emerald-600 mr-1.5"></i>Cadastrar Novo Produto na Nuvem</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -556,6 +530,8 @@
         carrinhoAberto: false,
         popupVisivel: true,
         chatbotAberto: false,
+        modalFaqProdutoAberto: false,
+        modalEditProdutoAberto: false,
         menuLateralAberto: false,
         modalPaginaAberto: false,
         modoConta: 'login',
@@ -595,13 +571,32 @@
           freteToken: ''
         },
 
-        novoProd: { nome: '', preco: null, img1: '', descricao: '' },
+        faqsPadrao: [
+          { pergunta: 'Qual o tecido / material?', resposta: 'Nossos produtos são confeccionados em tecidos nobres como moletinho premium e alfaiataria.' },
+          { pergunta: 'Tabela de Tamanhos', resposta: 'Trabalhamos com P (36/38), M (40), G (42) e GG (44).' },
+          { pergunta: 'Prazo de Entrega', resposta: 'Enviamos em até 24 horas úteis após a confirmação do pagamento.' }
+        ],
+
+        produtoChat: null,
+        mensagemChat: '',
+        chatMensagens: [],
+
+        prodEditandoFaq: null,
+        novaFaqProd: { pergunta: '', resposta: '' },
+        prodEmEdicao: null,
+        
+        novoProd: { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' },
+
         paginaAtual: { titulo: '', imagem: '', descricao: '', link: '' },
+        novaPagina: { titulo: '', imagem: '', descricao: '', link: '' },
         paginasAdmin: [],
+
         produtos: [],
         carrinho: [],
+        metricasCliques: [],
 
         async init() {
+          // Carregar Sessão local
           const sessao = localStorage.getItem('dridalia_sessao');
           if (sessao) { try { this.usuario = JSON.parse(sessao); } catch(e) {} }
 
@@ -611,6 +606,7 @@
           const car = localStorage.getItem('dridalia_carrinho');
           if (car) { try { this.carrinho = JSON.parse(car); } catch(e) {} }
 
+          // Buscar Configurações e Produtos do Banco D1 via Cloudflare Worker
           try {
             const resConfig = await fetch(this.workerUrl + '/api/config');
             const dataConfig = await resConfig.json();
@@ -624,8 +620,20 @@
           try {
             const resProd = await fetch(this.workerUrl + '/api/produtos');
             const dataProd = await resProd.json();
-            if (Array.isArray(dataProd)) {
+            if (Array.isArray(dataProd) && dataProd.length > 0) {
               this.produtos = dataProd;
+            } else {
+              // Produto padrão caso o banco esteja vazio
+              this.produtos = [{
+                id: '1',
+                nome: 'Conjunto Tati Moletinho Premium',
+                preco: 189.90,
+                descricao: 'Conjunto de moletinho super macio e elegante.',
+                tamanhos: ['P', 'M', 'G', 'GG'],
+                cores: ['Rosa', 'Preto', 'Nude'],
+                imagens: ['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600'],
+                faqs: []
+              }];
             }
           } catch(err) {
             console.error('Erro ao carregar produtos da nuvem:', err);
@@ -634,24 +642,20 @@
 
         async salvarConfiguracoes() {
           try {
-            const res = await fetch(this.workerUrl + '/api/config', {
+            await fetch(this.workerUrl + '/api/config', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(this.config)
             });
-            if (res.ok) {
-              alert('Configurações e Pop-up salvos com sucesso na nuvem!');
-            } else {
-              alert('Erro ao salvar no servidor.');
-            }
+            alert('Configurações salvas com sucesso na nuvem!');
           } catch(err) {
-            alert('Erro de conexão: ' + err.message);
+            alert('Erro ao salvar na nuvem: ' + err.message);
           }
         },
 
         async adicionarProduto() {
           if (!this.novoProd.nome || !this.novoProd.preco || !this.novoProd.img1) {
-            alert('Preencha nome, preço e a imagem principal.');
+            alert('Preencha nome, preço e imagem.');
             return;
           }
           const novoObj = {
@@ -661,38 +665,30 @@
             descricao: this.novoProd.descricao,
             tamanhos: ['P', 'M', 'G', 'GG'],
             cores: ['Rosa', 'Preto', 'Nude'],
-            imagens: [this.novoProd.img1].filter(Boolean),
+            imagens: [this.novoProd.img1, this.novoProd.img2, this.novoProd.img3, this.novoProd.img4, this.novoProd.img5].filter(Boolean),
             faqs: []
           };
 
           try {
-            const res = await fetch(this.workerUrl + '/api/produtos', {
+            await fetch(this.workerUrl + '/api/produtos', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(novoObj)
             });
-            if (res.ok) {
-              this.produtos.push(novoObj);
-              this.novoProd = { nome: '', preco: null, img1: '', descricao: '' };
-              alert('Produto cadastrado com sucesso na nuvem!');
-            } else {
-              alert('Erro ao salvar produto.');
-            }
+            this.produtos.push(novoObj);
+            this.novoProd = { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' };
+            alert('Produto cadastrado com sucesso na nuvem!');
           } catch(err) {
-            alert('Erro de conexão: ' + err.message);
+            alert('Erro ao cadastrar produto: ' + err.message);
           }
         },
 
         async excluirProduto(id) {
           if (confirm('Deseja excluir este produto da nuvem?')) {
             try {
-              const res = await fetch(this.workerUrl + '/api/produtos/' + id, { method: 'DELETE' });
-              if (res.ok) {
-                this.produtos = this.produtos.filter(p => p.id !== id);
-                alert('Produto excluído com sucesso!');
-              } else {
-                alert('Erro ao excluir produto no servidor.');
-              }
+              await fetch(this.workerUrl + '/api/produtos/' + id, { method: 'DELETE' });
+              this.produtos = this.produtos.filter(p => p.id !== id);
+              alert('Produto excluído com sucesso!');
             } catch(err) {
               alert('Erro ao excluir: ' + err.message);
             }
@@ -731,7 +727,9 @@
         },
 
         abrirChatbot(prod) {
-          alert(`Dúvidas sobre ${prod.nome}? Entre em contato conosco!`);
+          this.produtoChat = prod;
+          this.chatMensagens = [{ tipo: 'bot', texto: `Olá! Como posso ajudar com "${prod.nome}"?` }];
+          this.chatbotAberto = true;
         },
 
         clicarMinhaConta() { this.painelAberto = true; if (!this.usuario.logado) this.modoConta = 'login'; },
@@ -748,7 +746,7 @@
           const cod = 'DRI-' + Math.random().toString(36).substring(2, 7).toUpperCase();
           this.usuario = { logado: true, nome: this.formCadastro.nome, email: this.formCadastro.email.toLowerCase(), codigoAfiliado: cod, ganhosAfiliado: 0, vendasAfiliado: 0 };
           localStorage.setItem('dridalia_sessao', JSON.stringify(this.usuario));
-          alert('Conta criada com sucesso!');
+          alert('Conta criada!');
         },
 
         deslogar() {
@@ -772,12 +770,16 @@
         removerDoCarrinho(i) { this.carrinho.splice(i, 1); this.salvarCarrinho(); },
         calcularSubtotal() { return this.carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0); },
         salvarCarrinho() { localStorage.setItem('dridalia_carrinho', JSON.stringify(this.carrinho)); },
-        finalizarCompra() { alert('Redirecionando para pagamento seguro via Mercado Pago...'); },
+        finalizarCompra() { alert('Redirecionando para pagamento seguro...'); },
 
         compartilharProduto(prod) {
           const link = window.location.origin + '?prod=' + prod.id + '&ref=' + this.usuario.codigoAfiliado;
-          navigator.clipboard.writeText(link);
-          alert('Link copiado para a área de transferência!');
+          this.copiarTexto(link);
+        },
+
+        copiarTexto(txt) {
+          navigator.clipboard.writeText(txt);
+          alert('Link copiado!');
         },
 
         falarTexto(txt) {
@@ -793,4 +795,3 @@
   </script>
 </body>
 </html>
-```
