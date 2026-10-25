@@ -137,8 +137,17 @@ const app = {
         let op; try { op = (await cotar(env, endereco.cep, itens)).find(o => o.id === String(freteId)); } catch (e) { return J({ erro: e.message }, 422); }
         if (!op) return J({ erro: 'Escolha uma opção de frete.' }, 400);
         lista.push({ title: 'Frete - ' + op.nome, quantity: 1, unit_price: op.preco, currency_id: 'BRL' });
-        const o = await DB.prepare('INSERT INTO pedidos(email_cliente,codigo_afiliado,total,status,itens,endereco,data) VALUES(?,?,?,?,?,?,?)')
-          .bind(endereco.email, ref || null, total + op.preco, 'Pendente', JSON.stringify(itens), JSON.stringify(endereco), new Date().toISOString()).run();
+        let comissao = 0, refOk = null; // comissão sobre os produtos (sem frete); compra do próprio afiliado não rende
+        if (ref) {
+          const af = await DB.prepare('SELECT email FROM usuarios WHERE codigo_afiliado=?').bind(ref).first();
+          if (af && af.email !== String(endereco.email).toLowerCase().trim()) {
+            refOk = ref;
+            const pct = Number((jp(cfgRow && cfgRow.data, {}).privado || {}).comissaoPct) || 0;
+            comissao = Math.round(total * pct) / 100;
+          }
+        }
+        const o = await DB.prepare('INSERT INTO pedidos(email_cliente,codigo_afiliado,comissao_afiliado,total,status,itens,endereco,data) VALUES(?,?,?,?,?,?,?,?)')
+          .bind(endereco.email, refOk, comissao, total + op.preco, 'Pendente', JSON.stringify(itens), JSON.stringify(endereco), new Date().toISOString()).run();
         const r = await fetch('https://api.mercadopago.com/checkout/preferences', {
           method: 'POST',
           headers: { authorization: 'Bearer ' + mpToken, 'content-type': 'application/json' },
@@ -152,8 +161,9 @@ const app = {
       if (p === '/api/afiliado' && m === 'GET') {
         if (!me) return J({ erro: 'Entre na conta.' }, 401);
         const c = await DB.prepare('SELECT COUNT(*) n FROM cliques WHERE ref=?').bind(me.codigo_afiliado).first();
-        const v = await DB.prepare('SELECT COUNT(*) n, COALESCE(SUM(comissao_afiliado),0) s FROM pedidos WHERE codigo_afiliado=?').bind(me.codigo_afiliado).first();
-        return J({ cliques: c.n, vendas: v.n, comissao: v.s });
+        const v = await DB.prepare("SELECT COALESCE(SUM(CASE WHEN status='Pago' THEN 1 ELSE 0 END),0) n, COALESCE(SUM(CASE WHEN status='Pago' THEN comissao_afiliado ELSE 0 END),0) s, COALESCE(SUM(CASE WHEN status='Pendente' THEN comissao_afiliado ELSE 0 END),0) pend FROM pedidos WHERE codigo_afiliado=?").bind(me.codigo_afiliado).first();
+        const cf = await DB.prepare('SELECT data FROM config WHERE id=1').first();
+        return J({ cliques: c.n, vendas: v.n, comissao: v.s, pendente: v.pend, pct: Number((jp(cf && cf.data, {}).privado || {}).comissaoPct) || 0 });
       }
 
       // ---- somente admin ----
@@ -190,9 +200,10 @@ const app = {
       if (p === '/api/ajustes') { // chaves ficam só no banco, nunca vão para o público
         const row = await DB.prepare('SELECT data FROM config WHERE id=1').first();
         const all = jp(row && row.data, {}), pv = all.privado || {};
-        if (m === 'GET') return J({ mpPublicKey: pv.mpPublicKey || '', mpTokenOk: !!pv.mpToken, freteEmpresa: pv.freteEmpresa || 'superfrete', freteTokenOk: !!pv.freteToken, enderecoLoja: pv.enderecoLoja || {}, pacote: pv.pacote || {}, regras: pv.regras || [] });
+        if (m === 'GET') return J({ mpPublicKey: pv.mpPublicKey || '', mpTokenOk: !!pv.mpToken, freteEmpresa: pv.freteEmpresa || 'superfrete', freteTokenOk: !!pv.freteToken, enderecoLoja: pv.enderecoLoja || {}, pacote: pv.pacote || {}, regras: pv.regras || [], comissaoPct: pv.comissaoPct ?? 0 });
         const b = await body();
         all.privado = { ...pv, mpPublicKey: b.mpPublicKey ?? pv.mpPublicKey, freteEmpresa: b.freteEmpresa || pv.freteEmpresa, enderecoLoja: b.enderecoLoja || pv.enderecoLoja, pacote: b.pacote || pv.pacote, regras: Array.isArray(b.regras) ? b.regras.slice(0, 200) : pv.regras };
+        if (b.comissaoPct !== undefined && b.comissaoPct !== null && b.comissaoPct !== '') all.privado.comissaoPct = Math.max(0, Math.min(90, Number(b.comissaoPct) || 0));
         if (b.mpToken) all.privado.mpToken = b.mpToken;
         if (b.freteToken) all.privado.freteToken = b.freteToken;
         await DB.prepare('INSERT INTO config(id,data) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').bind(JSON.stringify(all)).run();
