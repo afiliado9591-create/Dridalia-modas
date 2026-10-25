@@ -224,7 +224,7 @@
     </div>
   </main>
 
-  <!-- DRAWER DO CARRINHO & CHECKOUT -->
+  <!-- DRAWER DO CARRINHO & CHECKOUT (COM ORDER BUMP) -->
   <div x-show="carrinhoAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end" x-cloak>
     <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between">
       <div class="p-4 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
@@ -265,6 +265,29 @@
             <button @click="removerDoCarrinho(index)" class="text-gray-400 hover:text-red-500 p-2"><i class="fa-solid fa-trash-can text-sm"></i></button>
           </div>
         </template>
+
+        <!-- ORDER BUMP -->
+        <div x-show="carrinho.length > 0" class="bg-rose-50/70 p-3.5 rounded-2xl border border-rose-200 space-y-2.5">
+          <h4 class="font-bold text-xs text-rose-900 flex items-center">
+            <i class="fa-solid fa-gift text-rose-600 mr-1.5"></i>Você também pode gostar disso (Oferta Especial):
+          </h4>
+          <div class="space-y-2">
+            <template x-for="prodSugerido in produtos.slice(0, 3)" :key="prodSugerido.id">
+              <div class="bg-white p-2.5 rounded-xl border flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-2.5 min-w-0">
+                  <img :src="prodSugerido.imagens ? prodSugerido.imagens[0] : prodSugerido.imagem" class="w-12 h-12 object-cover rounded-lg border flex-shrink-0">
+                  <div class="min-w-0">
+                    <h5 class="font-bold text-[11px] text-gray-900 truncate" x-text="prodSugerido.nome"></h5>
+                    <p class="text-[11px] font-black text-rose-600" x-text="'R$ ' + prodSugerido.preco.toFixed(2)"></p>
+                  </div>
+                </div>
+                <button @click="adicionarAoCarrinho(prodSugerido, prodSugerido.cores ? prodSugerido.cores[0] : 'Padrão', prodSugerido.tamanhos ? prodSugerido.tamanhos[0] : 'M')" class="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-lg shadow transition whitespace-nowrap">
+                  + Adicionar
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
 
         <!-- ENDEREÇO -->
         <div x-show="carrinho.length > 0" class="bg-gray-50 p-4 rounded-2xl border space-y-3">
@@ -476,7 +499,7 @@
               </div>
             </div>
 
-            <!-- PAINEL ADMIN DE CONFIGURAÇÕES -->
+            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (COM CEP DE ORIGEM DA LOJA) -->
             <div x-show="abaPainel === 'admin'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
                 <div>
@@ -505,7 +528,7 @@
                 </div>
               </div>
 
-              <!-- GESTÃO DO FRETE -->
+              <!-- GESTÃO DO FRETE (COM CEP DE ORIGEM ADICIONADO) -->
               <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-4">
                 <h4 class="font-bold text-xs text-blue-900"><i class="fa-solid fa-truck-fast mr-2"></i>Configuração de Frete (Super Frete)</h4>
                 
@@ -520,7 +543,7 @@
                     </select>
                   </div>
                   <div>
-                    <label class="text-[10px] font-bold text-gray-600">CEP de Origem da Loja</label>
+                    <label class="text-[10px] font-bold text-gray-600">CEP de Origem da Loja (De onde sai)</label>
                     <input type="text" x-model="config.cepOrigem" placeholder="Ex: 01001-000" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1 font-mono">
                   </div>
                   <div>
@@ -656,39 +679,25 @@
 
         init() {
           const cfg = localStorage.getItem('dridalia_config');
-          if (cfg) {
-            try { this.config = JSON.parse(cfg); } catch(e) {}
-          }
+          if (cfg) this.config = JSON.parse(cfg);
 
           const prods = localStorage.getItem('dridalia_produtos');
-          if (prods) {
-            try { this.produtos = JSON.parse(prods); } catch(e) {}
-          }
+          if (prods) this.produtos = JSON.parse(prods);
 
           const sessao = localStorage.getItem('dridalia_sessao');
-          if (sessao) {
-            try { this.usuario = JSON.parse(sessao); } catch(e) {}
-          }
+          if (sessao) this.usuario = JSON.parse(sessao);
 
           const end = localStorage.getItem('dridalia_endereco');
-          if (end) {
-            try { this.endereco = JSON.parse(end); this.enderecoSalvo = true; } catch(e) {}
-          }
+          if (end) { this.endereco = JSON.parse(end); this.enderecoSalvo = true; }
 
           const car = localStorage.getItem('dridalia_carrinho');
-          if (car) {
-            try { this.carrinho = JSON.parse(car); } catch(e) {}
-          }
+          if (car) this.carrinho = JSON.parse(car);
 
           const met = localStorage.getItem('dridalia_metricas_cliques');
-          if (met) {
-            try { this.metricasCliques = JSON.parse(met); } catch(e) {}
-          }
+          if (met) this.metricasCliques = JSON.parse(met);
 
           const pgs = localStorage.getItem('dridalia_paginas_admin');
-          if (pgs) {
-            try { this.paginasAdmin = JSON.parse(pgs); } catch(e) {}
-          }
+          if (pgs) this.paginasAdmin = JSON.parse(pgs);
         },
 
         abrirPaginaInstitucional(tipo) {
