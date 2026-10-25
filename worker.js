@@ -2,7 +2,6 @@
 // Secrets: ADMIN_EMAIL, MP_TOKEN
 // Tabelas: usuarios, produtos, pedidos, cupons, config (id=1, data=JSON) + sessoes, paginas, cliques (migracao-01.sql)
 
-const FRETE = 15;
 const PUB = ['nomeLoja', 'logo', 'banner', 'popupAtivo', 'popupTag', 'popupTitulo', 'popupTexto', 'popupImagem', 'popupProdutoId']; // únicas chaves da config que o público pode ver
 const J = (d, s = 200) => Response.json(d, { status: s });
 const jp = (s, d = []) => { try { const v = JSON.parse(s); return v ?? d; } catch { return d; } };
@@ -17,6 +16,39 @@ async function sessao(env, id) {
   const token = crypto.randomUUID() + crypto.randomUUID();
   await env.LOJA_DB.prepare('INSERT INTO sessoes(token,user_id,exp) VALUES(?,?,?)').bind(token, id, Date.now() + 30 * 864e5).run();
   return token;
+}
+
+const norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+// Cotação: regra de frete fixo por cidade (se existir) ou Super Frete
+async function cotar(env, cep, itens) {
+  const row = await env.LOJA_DB.prepare('SELECT data FROM config WHERE id=1').first();
+  const pv = jp(row && row.data, {}).privado || {};
+  const dest = String(cep || '').replace(/[^0-9]/g, '');
+  if (dest.length !== 8) throw new Error('CEP inválido.');
+  const v = await (await fetch('https://viacep.com.br/ws/' + dest + '/json/')).json().catch(() => ({ erro: true }));
+  if (v.erro) throw new Error('CEP não encontrado.');
+  const regra = (pv.regras || []).find(r => norm(r.cidade) === norm(v.localidade) && String(r.uf).toUpperCase() === v.uf);
+  if (regra) return [{ id: 'fixo', nome: 'Frete fixo - ' + v.localidade, preco: Number(regra.valor), prazo: null }];
+  if ((pv.freteEmpresa || 'superfrete') !== 'superfrete') throw new Error('Essa transportadora ainda não está integrada. Escolha a Super Frete.');
+  const origem = String((pv.enderecoLoja || {}).cep || '').replace(/[^0-9]/g, '');
+  if (!pv.freteToken || origem.length !== 8) throw new Error('Frete ainda não configurado pela loja.');
+  const pk = { altura: 8, largura: 20, comprimento: 28, peso: 0.6, ...(pv.pacote || {}) };
+  let q = 0; for (const it of itens) q += Math.max(1, Math.min(20, parseInt(it.qtd) || 1));
+  const r = await fetch('https://api.superfrete.com/api/v0/calculator', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + pv.freteToken, 'content-type': 'application/json', accept: 'application/json', 'User-Agent': 'Dridalia (' + (env.ADMIN_EMAIL || 'loja') + ')' },
+    body: JSON.stringify({
+      from: { postal_code: origem }, to: { postal_code: dest }, services: '1,2,17',
+      options: { own_hand: false, receipt: false, insurance_value: 0, use_insurance_value: false },
+      package: { height: Math.min(100, pk.altura * q), width: pk.largura, length: pk.comprimento, weight: pk.peso * q }
+    })
+  });
+  const d = await r.json().catch(() => null);
+  if (!r.ok || !Array.isArray(d)) throw new Error('Super Frete: ' + ((d && (d.message || d.error)) || r.status));
+  const ok = d.filter(o => !o.has_error && o.price != null).map(o => ({ id: String(o.id), nome: o.name || 'Correios', preco: Number(o.price), prazo: o.delivery_time || (o.delivery_range && o.delivery_range.max) || null }));
+  if (!ok.length) throw new Error('Nenhuma opção de frete para esse CEP.');
+  return ok;
 }
 
 const pub = (u, env) => ({ nome: u.nome, email: u.email, codigo: u.codigo_afiliado, admin: u.email === env.ADMIN_EMAIL });
@@ -51,7 +83,7 @@ const app = {
           const imgs = jp(x.imagens);
           return { id: x.id, nome: x.nome, preco: x.preco, descricao: x.descricao, tamanhos: jp(x.tamanhos), cores: jp(x.cores), imagens: imgs.length ? imgs : (x.imagem ? [x.imagem] : []), faqs: jp(x.faqs) };
         });
-        return J({ produtos, paginas: pg.results, config, frete: FRETE });
+        return J({ produtos, paginas: pg.results, config });
       }
 
       if (p === '/api/register' && m === 'POST') {
@@ -82,8 +114,13 @@ const app = {
         return J({ ok: 1 });
       }
 
+      if (p === '/api/frete' && m === 'POST') {
+        const b = await body();
+        try { return J({ opcoes: await cotar(env, b.cep, b.itens || []) }); } catch (e) { return J({ erro: e.message }, 422); }
+      }
+
       if (p === '/api/checkout' && m === 'POST') {
-        const { itens, endereco, ref } = await body();
+        const { itens, endereco, ref, freteId } = await body();
         if (!Array.isArray(itens) || !itens.length) return J({ erro: 'Carrinho vazio.' }, 400);
         if (!endereco || !endereco.email) return J({ erro: 'Informe o e-mail.' }, 400);
         const cfgRow = await DB.prepare('SELECT data FROM config WHERE id=1').first();
@@ -97,9 +134,11 @@ const app = {
           total += pr.preco * q;
           lista.push({ title: `${pr.nome} (${it.tam}/${it.cor})`, quantity: q, unit_price: pr.preco, currency_id: 'BRL' });
         }
-        lista.push({ title: 'Frete', quantity: 1, unit_price: FRETE, currency_id: 'BRL' });
+        let op; try { op = (await cotar(env, endereco.cep, itens)).find(o => o.id === String(freteId)); } catch (e) { return J({ erro: e.message }, 422); }
+        if (!op) return J({ erro: 'Escolha uma opção de frete.' }, 400);
+        lista.push({ title: 'Frete - ' + op.nome, quantity: 1, unit_price: op.preco, currency_id: 'BRL' });
         const o = await DB.prepare('INSERT INTO pedidos(email_cliente,codigo_afiliado,total,status,itens,endereco,data) VALUES(?,?,?,?,?,?,?)')
-          .bind(endereco.email, ref || null, total + FRETE, 'Pendente', JSON.stringify(itens), JSON.stringify(endereco), new Date().toISOString()).run();
+          .bind(endereco.email, ref || null, total + op.preco, 'Pendente', JSON.stringify(itens), JSON.stringify(endereco), new Date().toISOString()).run();
         const r = await fetch('https://api.mercadopago.com/checkout/preferences', {
           method: 'POST',
           headers: { authorization: 'Bearer ' + mpToken, 'content-type': 'application/json' },
@@ -151,9 +190,9 @@ const app = {
       if (p === '/api/ajustes') { // chaves ficam só no banco, nunca vão para o público
         const row = await DB.prepare('SELECT data FROM config WHERE id=1').first();
         const all = jp(row && row.data, {}), pv = all.privado || {};
-        if (m === 'GET') return J({ mpPublicKey: pv.mpPublicKey || '', mpTokenOk: !!pv.mpToken, freteEmpresa: pv.freteEmpresa || 'superfrete', freteTokenOk: !!pv.freteToken, enderecoLoja: pv.enderecoLoja || {} });
+        if (m === 'GET') return J({ mpPublicKey: pv.mpPublicKey || '', mpTokenOk: !!pv.mpToken, freteEmpresa: pv.freteEmpresa || 'superfrete', freteTokenOk: !!pv.freteToken, enderecoLoja: pv.enderecoLoja || {}, pacote: pv.pacote || {}, regras: pv.regras || [] });
         const b = await body();
-        all.privado = { ...pv, mpPublicKey: b.mpPublicKey ?? pv.mpPublicKey, freteEmpresa: b.freteEmpresa || pv.freteEmpresa, enderecoLoja: b.enderecoLoja || pv.enderecoLoja };
+        all.privado = { ...pv, mpPublicKey: b.mpPublicKey ?? pv.mpPublicKey, freteEmpresa: b.freteEmpresa || pv.freteEmpresa, enderecoLoja: b.enderecoLoja || pv.enderecoLoja, pacote: b.pacote || pv.pacote, regras: Array.isArray(b.regras) ? b.regras.slice(0, 200) : pv.regras };
         if (b.mpToken) all.privado.mpToken = b.mpToken;
         if (b.freteToken) all.privado.freteToken = b.freteToken;
         await DB.prepare('INSERT INTO config(id,data) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').bind(JSON.stringify(all)).run();
