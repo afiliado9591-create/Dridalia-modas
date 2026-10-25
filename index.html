@@ -155,13 +155,16 @@
           <input x-model="end.cidade" placeholder="Cidade" class="p-2 border rounded-xl text-xs col-span-2">
           <input x-model="end.uf" maxlength="2" placeholder="UF" class="p-2 border rounded-xl text-xs uppercase">
         </div>
+        <p x-show="calculando" class="text-xs text-gray-500">Calculando frete...</p>
+        <p x-show="freteErro" class="text-xs text-red-600" x-text="freteErro"></p>
+        <template x-for="o in opcoes" :key="o.id"><label class="flex items-center justify-between bg-white border rounded-xl p-2 text-xs cursor-pointer"><span class="flex items-center gap-2"><input type="radio" name="fr" :value="o.id" x-model="freteSel" @change="frete=o.preco"><b x-text="o.nome"></b><span class="text-gray-500" x-text="o.prazo?('até '+o.prazo+' dias úteis'):''"></span></span><b x-text="brl(o.preco)"></b></label></template>
       </div>
     </div>
     <div class="p-4 border-t bg-gray-50 space-y-2" x-show="itens.length">
       <div class="flex justify-between text-xs"><span>Subtotal</span><b x-text="brl(subtotal())"></b></div>
-      <div class="flex justify-between text-xs"><span>Frete</span><b x-text="brl(frete)"></b></div>
+      <div class="flex justify-between text-xs"><span>Frete</span><b x-text="freteSel?brl(frete):'informe o CEP'"></b></div>
       <div class="flex justify-between"><b>Total</b><b class="text-xl text-rose-600" x-text="brl(subtotal()+frete)"></b></div>
-      <button @click="pagar()" :disabled="pagando" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl"><i class="fa-solid fa-lock mr-1"></i><span x-text="pagando?'Aguarde...':'PAGAR COM MERCADO PAGO'"></span></button>
+      <button @click="pagar()" :disabled="pagando||!freteSel" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl"><i class="fa-solid fa-lock mr-1"></i><span x-text="pagando?'Aguarde...':'PAGAR COM MERCADO PAGO'"></span></button>
     </div>
   </div>
 </div>
@@ -240,6 +243,13 @@
           <div class="grid grid-cols-3 gap-2"><input x-model="aj.enderecoLoja.cep" placeholder="CEP" class="p-2 border rounded-xl"><input x-model="aj.enderecoLoja.rua" placeholder="Rua" class="p-2 border rounded-xl col-span-2"></div>
           <div class="grid grid-cols-3 gap-2"><input x-model="aj.enderecoLoja.numero" placeholder="Nº" class="p-2 border rounded-xl"><input x-model="aj.enderecoLoja.bairro" placeholder="Bairro" class="p-2 border rounded-xl col-span-2"></div>
           <div class="grid grid-cols-3 gap-2"><input x-model="aj.enderecoLoja.cidade" placeholder="Cidade" class="p-2 border rounded-xl col-span-2"><input x-model="aj.enderecoLoja.uf" maxlength="2" placeholder="UF" class="p-2 border rounded-xl uppercase"></div>
+          <b>Tamanho do pacote (por peça)</b>
+          <div class="grid grid-cols-4 gap-2"><input x-model.number="aj.pacote.altura" placeholder="Alt cm" class="p-2 border rounded-xl"><input x-model.number="aj.pacote.largura" placeholder="Larg cm" class="p-2 border rounded-xl"><input x-model.number="aj.pacote.comprimento" placeholder="Comp cm" class="p-2 border rounded-xl"><input x-model.number="aj.pacote.peso" placeholder="Peso kg" class="p-2 border rounded-xl"></div>
+          <b>Frete fixo por cidade (opcional)</b>
+          <p class="text-gray-500">Nas cidades abaixo vale o valor fixo. Nas demais, a Super Frete calcula.</p>
+          <template x-for="(g,n) in aj.regras" :key="n"><div class="flex justify-between items-center border rounded-xl p-2"><span x-text="g.cidade+'/'+g.uf+' - '+brl(g.valor)"></span><button @click="aj.regras.splice(n,1)" class="text-red-500"><i class="fa-solid fa-trash-can"></i></button></div></template>
+          <div class="grid grid-cols-6 gap-2"><input x-model="aj.nr.cidade" placeholder="Cidade" class="p-2 border rounded-xl col-span-3"><input x-model="aj.nr.uf" maxlength="2" placeholder="UF" class="p-2 border rounded-xl uppercase"><input x-model.number="aj.nr.valor" type="number" step="0.01" placeholder="R$" class="p-2 border rounded-xl col-span-2"></div>
+          <button @click="addRegra()" class="w-full py-2 bg-blue-600 text-white font-bold rounded-xl">Adicionar cidade</button>
           <button @click="salvarAj()" class="w-full py-3 bg-gray-900 text-white font-bold rounded-xl">Salvar pagamento e frete</button>
         </div>
       </div>
@@ -255,12 +265,12 @@ function loja(){return{
   cfg:{nomeLoja:'Dridalia Moda Feminina',logo:'',banner:'',popupAtivo:false,popupTag:'',popupTitulo:'',popupTexto:'',popupImagem:'',popupProdutoId:null},
   produtos:[],paginas:[],user:null,carregando:true,
   menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,ocupado:false,
-  f:{nome:'',email:'',senha:''},itens:[],frete:15,
+  f:{nome:'',email:'',senha:''},itens:[],frete:0,opcoes:[],freteSel:null,calculando:false,freteErro:'',
   end:{nome:'',email:'',cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''},
   pf:{id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:['','','','','']},
   nf:{titulo:'',imagem:'',descricao:'',link:''},
   af:{cliques:0,vendas:0,comissao:0},
-  aj:{mpPublicKey:'',mpToken:'',mpTokenOk:false,freteEmpresa:'superfrete',freteToken:'',freteTokenOk:false,enderecoLoja:{cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''}},
+  aj:{mpPublicKey:'',mpToken:'',mpTokenOk:false,freteEmpresa:'superfrete',freteToken:'',freteTokenOk:false,pacote:{altura:8,largura:20,comprimento:28,peso:0.6},regras:[],nr:{cidade:'',uf:'',valor:null},enderecoLoja:{cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''}},
   politicas:[
     {titulo:'Política de Privacidade',descricao:'Respeitamos a sua privacidade e usamos seus dados apenas para processar pedidos e atendimento.'},
     {titulo:'Frete e Entrega',descricao:'Enviamos para todo o Brasil via Super Frete e Correios, em até 24h úteis após a confirmação do pagamento.'},
@@ -277,7 +287,7 @@ function loja(){return{
   async init(){
     try{this.itens=JSON.parse(localStorage.getItem('dri_car')||'[]');this.end=JSON.parse(localStorage.getItem('dri_end')||'null')||this.end}catch(e){}
     const q=new URLSearchParams(location.search);if(q.get('ref'))localStorage.setItem('dri_ref',q.get('ref'));
-    try{const d=await this.api('store');this.produtos=d.produtos;this.paginas=d.paginas;Object.assign(this.cfg,d.config);this.frete=d.frete??15}catch(e){console.error(e)}
+    try{const d=await this.api('store');this.produtos=d.produtos;this.paginas=d.paginas;Object.assign(this.cfg,d.config);}catch(e){console.error(e)}
     this.carregando=false;
     if(localStorage.getItem('dri_token')){try{this.user=(await this.api('me')).user}catch(e){localStorage.removeItem('dri_token')}}
     this.api('click','POST',{ref:q.get('ref'),prod:q.get('prod')}).catch(()=>{});
@@ -295,13 +305,20 @@ function loja(){return{
   qtd(n,v){this.itens[n].qtd+=v;if(this.itens[n].qtd<=0)this.itens.splice(n,1);this.salvarCar()},
   qtdTotal(){return this.itens.reduce((a,i)=>a+i.qtd,0)},
   subtotal(){return this.itens.reduce((a,i)=>a+i.preco*i.qtd,0)},
-  salvarCar(){localStorage.setItem('dri_car',JSON.stringify(this.itens))},
+  salvarCar(){localStorage.setItem('dri_car',JSON.stringify(this.itens));clearTimeout(this._t);this._t=setTimeout(()=>this.cotar(),400)},
+  async cotar(){const c=(this.end.cep||'').replace(/[^0-9]/g,'');
+    if(c.length!==8||!this.itens.length){this.opcoes=[];this.freteSel=null;this.frete=0;return}
+    this.calculando=true;this.freteErro='';
+    try{const d=await this.api('frete','POST',{cep:c,itens:this.itens.map(i=>({id:i.id,qtd:i.qtd}))});
+      this.opcoes=d.opcoes;const m=[...d.opcoes].sort((a,b)=>a.preco-b.preco)[0];this.freteSel=m.id;this.frete=m.preco}
+    catch(e){this.opcoes=[];this.freteSel=null;this.frete=0;this.freteErro=e.message}
+    this.calculando=false},
   async cep(){const c=this.end.cep.replace(/\D/g,'');if(c.length!==8)return;
-    try{const d=await (await fetch('https://viacep.com.br/ws/'+c+'/json/')).json();if(!d.erro)Object.assign(this.end,{rua:d.logradouro,bairro:d.bairro,cidade:d.localidade,uf:d.uf})}catch(e){}},
+    try{const d=await (await fetch('https://viacep.com.br/ws/'+c+'/json/')).json();if(!d.erro)Object.assign(this.end,{rua:d.logradouro,bairro:d.bairro,cidade:d.localidade,uf:d.uf})}catch(e){}this.cotar()},
   async pagar(){const e=this.end;
     if(!e.nome||!e.email||!e.cep||!e.rua||!e.numero||!e.cidade||!e.uf)return alert('Preencha o endereço de entrega.');
     this.pagando=true;localStorage.setItem('dri_end',JSON.stringify(e));
-    try{const d=await this.api('checkout','POST',{itens:this.itens.map(i=>({id:i.id,qtd:i.qtd,cor:i.cor,tam:i.tam})),endereco:e,ref:localStorage.getItem('dri_ref')});
+    try{const d=await this.api('checkout','POST',{itens:this.itens.map(i=>({id:i.id,qtd:i.qtd,cor:i.cor,tam:i.tam})),endereco:e,freteId:this.freteSel,ref:localStorage.getItem('dri_ref')});
       location.href=d.url}catch(x){alert(x.message);this.pagando=false}},
   // admin
   zerarPf(){this.pf={id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:['','','','','']}},
@@ -320,9 +337,11 @@ function loja(){return{
   promo(){return this.produtos.find(x=>x.id==this.cfg.popupProdutoId)},
   async promover(p){if(!confirm('Mostrar "'+p.nome+'" no pop-up de promoção?'))return;
     try{await this.api('config','POST',{popupProdutoId:p.id,popupAtivo:true});this.cfg.popupProdutoId=p.id;this.cfg.popupAtivo=true;this.popup=true}catch(e){alert(e.message)}},
+  addRegra(){const n=this.aj.nr;if(!n.cidade||!n.uf||n.valor===null||n.valor==='')return alert('Informe cidade, UF e valor.');
+    this.aj.regras.push({cidade:n.cidade.trim(),uf:n.uf.trim().toUpperCase(),valor:Number(n.valor)});this.aj.nr={cidade:'',uf:'',valor:null}},
   async carregarAf(){try{this.af=await this.api('afiliado')}catch(e){}},
-  async carregarAj(){try{const d=await this.api('ajustes');this.aj={...this.aj,...d,enderecoLoja:{...this.aj.enderecoLoja,...(d.enderecoLoja||{})},mpToken:'',freteToken:''}}catch(e){}},
-  async salvarAj(){const a=this.aj;try{await this.api('ajustes','POST',{mpPublicKey:a.mpPublicKey,mpToken:a.mpToken,freteEmpresa:a.freteEmpresa,freteToken:a.freteToken,enderecoLoja:a.enderecoLoja});alert('Salvo!');await this.carregarAj()}catch(e){alert(e.message)}},
+  async carregarAj(){try{const d=await this.api('ajustes');this.aj={...this.aj,...d,enderecoLoja:{...this.aj.enderecoLoja,...(d.enderecoLoja||{})},pacote:{...this.aj.pacote,...(d.pacote||{})},regras:d.regras||[],mpToken:'',freteToken:''}}catch(e){}},
+  async salvarAj(){const a=this.aj;try{await this.api('ajustes','POST',{mpPublicKey:a.mpPublicKey,mpToken:a.mpToken,freteEmpresa:a.freteEmpresa,freteToken:a.freteToken,enderecoLoja:a.enderecoLoja,pacote:a.pacote,regras:a.regras});alert('Salvo!');await this.carregarAj()}catch(e){alert(e.message)}},
   abrirPag(p){this.menu=false;this.pag=p},
   linkProd(p){this.copiar(location.origin+'?prod='+p.id+'&ref='+this.user.codigo)},
   copiar(t){navigator.clipboard.writeText(t);alert('Link copiado!')},
