@@ -2,7 +2,7 @@
 // Secrets: ADMIN_EMAIL, MP_TOKEN
 // Tabelas: usuarios, produtos, pedidos, cupons, config (id=1, data=JSON) + sessoes, paginas, cliques (migracao-01.sql)
 
-const PUB = ['nomeLoja', 'logo', 'banner', 'popupAtivo', 'popupTag', 'popupTitulo', 'popupTexto', 'popupImagem', 'popupProdutoId']; // únicas chaves da config que o público pode ver
+const PUB = ['nomeLoja', 'logo', 'banner', 'popupAtivo', 'popupTag', 'popupTitulo', 'popupTexto', 'popupImagem', 'popupProdutoId', 'bumpProdutoId', 'bumpPreco']; // únicas chaves da config que o público pode ver
 const J = (d, s = 200) => Response.json(d, { status: s });
 const jp = (s, d = []) => { try { const v = JSON.parse(s); return v ?? d; } catch { return d; } };
 
@@ -126,13 +126,15 @@ const app = {
         const cfgRow = await DB.prepare('SELECT data FROM config WHERE id=1').first();
         const mpToken = env.MP_TOKEN || (jp(cfgRow && cfgRow.data, {}).privado || {}).mpToken;
         if (!mpToken) return J({ erro: 'Pagamento ainda não configurado.' }, 503);
+        const cfgAll = jp(cfgRow && cfgRow.data, {});
         const lista = []; let total = 0;
         for (const it of itens) { // preço SEMPRE vem do banco
           const pr = await DB.prepare('SELECT id,nome,preco FROM produtos WHERE id=?').bind(it.id).first();
           if (!pr) return J({ erro: 'Produto indisponível.' }, 400);
           const q = Math.max(1, Math.min(20, parseInt(it.qtd) || 1));
-          total += pr.preco * q;
-          lista.push({ title: `${pr.nome} (${it.tam}/${it.cor})`, quantity: q, unit_price: pr.preco, currency_id: 'BRL' });
+          const preco = (it.bump && cfgAll.bumpProdutoId != null && String(it.id) === String(cfgAll.bumpProdutoId) && Number(cfgAll.bumpPreco) > 0 && Number(cfgAll.bumpPreco) < pr.preco) ? Number(cfgAll.bumpPreco) : pr.preco; // order bump: preço vem do servidor
+          total += preco * q;
+          lista.push({ title: `${pr.nome} (${it.tam}/${it.cor})`, quantity: q, unit_price: preco, currency_id: 'BRL' });
         }
         let op; try { op = (await cotar(env, endereco.cep, itens)).find(o => o.id === String(freteId)); } catch (e) { return J({ erro: e.message }, 422); }
         if (!op) return J({ erro: 'Escolha uma opção de frete.' }, 400);
