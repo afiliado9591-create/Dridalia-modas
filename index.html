@@ -108,6 +108,7 @@
         </div>
         <div x-show="user&&user.admin" class="bg-gray-900 p-2 flex flex-wrap gap-1 text-[10px] text-white">
           <button @click="editar(p)" class="bg-blue-600 px-2 py-1 rounded font-bold">Editar</button>
+          <button @click="definirBump(p)" class="bg-pink-600 px-2 py-1 rounded font-bold"><i class="fa-solid fa-gift mr-1"></i>Order bump</button>
           <button @click="abrirFaq(p)" class="bg-emerald-600 px-2 py-1 rounded font-bold"><i class="fa-solid fa-comments mr-1"></i>Chat</button>
           <button @click="promover(p)" class="bg-amber-500 px-2 py-1 rounded font-bold"><i class="fa-solid fa-bullhorn mr-1"></i>Promoção</button>
           <button @click="excluir(p.id)" class="bg-red-600 px-2 py-1 rounded font-bold">Excluir</button>
@@ -138,7 +139,16 @@
           <button @click="itens.splice(n,1);salvarCar()" class="text-gray-400"><i class="fa-solid fa-trash-can"></i></button>
         </div>
       </template>
-      <div x-show="itens.length" class="bg-gray-50 p-4 rounded-2xl border space-y-2">
+      <div x-show="itens.length&&bump()&&!itens.some(i=>i.bump)" class="bg-rose-50/70 p-3 rounded-2xl border border-rose-200 space-y-2">
+          <p class="font-bold text-xs text-rose-900"><i class="fa-solid fa-gift text-rose-600 mr-1"></i>Você também pode gostar (oferta especial)</p>
+          <div class="bg-white p-2 rounded-xl border flex items-center gap-2">
+            <img :src="bump()&&(bump().imagens||[])[0]" class="w-14 h-14 object-cover rounded-lg flex-none">
+            <div class="flex-1 min-w-0"><p class="font-bold text-[11px] truncate" x-text="bump()&&bump().nome"></p>
+              <p class="text-[11px]"><s class="text-gray-400" x-show="bump()&&bumpPreco()<bump().preco" x-text="bump()&&brl(bump().preco)"></s> <b class="text-rose-600" x-text="bump()&&brl(bumpPreco())"></b></p></div>
+            <button @click="addBump()" class="px-2.5 py-1.5 bg-rose-600 text-white font-bold text-[10px] rounded-lg whitespace-nowrap">+ Adicionar</button>
+          </div>
+        </div>
+        <div x-show="itens.length" class="bg-gray-50 p-4 rounded-2xl border space-y-2">
         <h4 class="font-bold text-xs"><i class="fa-solid fa-location-dot text-rose-600 mr-1"></i>Entrega</h4>
         <div class="grid grid-cols-2 gap-2">
           <input x-model="end.nome" placeholder="Nome completo" class="p-2 border rounded-xl text-xs">
@@ -233,6 +243,7 @@
         <input x-model="cfg.popupImagem" placeholder="URL imagem pop-up" class="w-full p-2 border rounded-xl">
         <textarea x-model="cfg.popupTexto" placeholder="Texto" class="w-full p-2 border rounded-xl h-16"></textarea>
         
+        <p class="text-gray-500" x-show="bump()">Order bump atual: <b x-text="bump()&&bump().nome"></b> <button @click="removerBump()" class="text-red-500 font-bold underline">remover</button></p>
         <button @click="salvarCfg()" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl">Salvar loja</button>
         <div class="border-t pt-3 mt-3 space-y-2">
           <b>Comissão do afiliado (%)</b>
@@ -328,7 +339,7 @@
 <script>
 const API='https://dridalia-api.bmlimp8.workers.dev/api/';
 function loja(){return{
-  cfg:{nomeLoja:'Dridalia Moda Feminina',logo:'',banner:'',popupAtivo:false,popupTag:'',popupTitulo:'',popupTexto:'',popupImagem:'',popupProdutoId:null},
+  cfg:{nomeLoja:'Dridalia Moda Feminina',logo:'',banner:'',popupAtivo:false,popupTag:'',popupTitulo:'',popupTexto:'',popupImagem:'',popupProdutoId:null,bumpProdutoId:null,bumpPreco:0},
   produtos:[],paginas:[],user:null,carregando:true,
   menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,ocupado:false,share:null,falando:null,vozChat:false,faqEd:null,chat:{p:null,txt:'',msgs:[]},
   f:{nome:'',email:'',senha:''},itens:[],frete:0,opcoes:[],freteSel:null,calculando:false,freteErro:'',
@@ -366,7 +377,7 @@ function loja(){return{
     localStorage.setItem('dri_token',d.token);this.user=d.user;this.f={nome:'',email:'',senha:''};this.aba='afiliado'}catch(e){this.erro=e.message}this.ocupado=false},
   async sair(){try{await this.api('logout','POST')}catch(e){}localStorage.removeItem('dri_token');this.user=null;this.conta=false},
   // carrinho
-  add(p,cor,tam){const i=this.itens.findIndex(x=>x.id===p.id&&x.cor===cor&&x.tam===tam);
+  add(p,cor,tam){const i=this.itens.findIndex(x=>x.id===p.id&&x.cor===cor&&x.tam===tam&&!x.bump);
     if(i>-1)this.itens[i].qtd++;else this.itens.push({id:p.id,nome:p.nome,preco:p.preco,img:(p.imagens||[])[0],cor:cor||'Padrão',tam:tam||'Único',qtd:1});
     this.salvarCar();this.carrinho=true},
   qtd(n,v){this.itens[n].qtd+=v;if(this.itens[n].qtd<=0)this.itens.splice(n,1);this.salvarCar()},
@@ -385,7 +396,7 @@ function loja(){return{
   async pagar(){const e=this.end;
     if(!e.nome||!e.email||!e.cep||!e.rua||!e.numero||!e.cidade||!e.uf)return alert('Preencha o endereço de entrega.');
     this.pagando=true;localStorage.setItem('dri_end',JSON.stringify(e));
-    try{const d=await this.api('checkout','POST',{itens:this.itens.map(i=>({id:i.id,qtd:i.qtd,cor:i.cor,tam:i.tam})),endereco:e,freteId:this.freteSel,ref:localStorage.getItem('dri_ref')});
+    try{const d=await this.api('checkout','POST',{itens:this.itens.map(i=>({id:i.id,qtd:i.qtd,cor:i.cor,tam:i.tam,bump:!!i.bump})),endereco:e,freteId:this.freteSel,ref:localStorage.getItem('dri_ref')});
       location.href=d.url}catch(x){alert(x.message);this.pagando=false}},
   // admin
   zerarPf(){this.pf={id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:['','','','','']}},
@@ -404,6 +415,13 @@ function loja(){return{
   promo(){return this.produtos.find(x=>x.id==this.cfg.popupProdutoId)},
   async promover(p){if(!confirm('Mostrar "'+p.nome+'" no pop-up de promoção?'))return;
     try{await this.api('config','POST',{popupProdutoId:p.id,popupAtivo:true});this.cfg.popupProdutoId=p.id;this.cfg.popupAtivo=true;this.popup=true}catch(e){alert(e.message)}},
+  bump(){return this.produtos.find(x=>x.id==this.cfg.bumpProdutoId)},
+  bumpPreco(){const b=this.bump(),p=Number(this.cfg.bumpPreco);return b?(p>0&&p<b.preco?p:b.preco):0},
+  addBump(){const b=this.bump();if(!b)return;this.itens.push({id:b.id,nome:b.nome+' (oferta)',preco:this.bumpPreco(),img:(b.imagens||[])[0],cor:(b.cores||[])[0]||'Padrão',tam:(b.tamanhos||[])[0]||'Único',qtd:1,bump:true});this.salvarCar()},
+  async definirBump(p){const v=prompt('Preço promocional do order bump para "'+p.nome+'" (deixe vazio para usar o preço normal):','');if(v===null)return;
+    const preco=v.trim()===''?0:Number(v.replace(',','.'));if(isNaN(preco)||preco<0)return alert('Valor inválido.');
+    try{await this.api('config','POST',{bumpProdutoId:p.id,bumpPreco:preco});this.cfg.bumpProdutoId=p.id;this.cfg.bumpPreco=preco;alert('Order bump definido!')}catch(e){alert(e.message)}},
+  async removerBump(){try{await this.api('config','POST',{bumpProdutoId:null,bumpPreco:0});this.cfg.bumpProdutoId=null;this.cfg.bumpPreco=0}catch(e){alert(e.message)}},
   dizer(t){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const m=new SpeechSynthesisUtterance(t);m.lang='pt-BR';speechSynthesis.speak(m)},
   alternarVoz(){this.vozChat=!this.vozChat;try{localStorage.setItem('dri_voz',this.vozChat?'1':'0')}catch(e){}
     if(this.vozChat)this.dizer('Voz ativada.');else if('speechSynthesis' in window)speechSynthesis.cancel()},
