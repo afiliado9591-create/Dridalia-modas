@@ -1,1026 +1,310 @@
 <!DOCTYPE html>
-<html lang="pt-BR" dir="ltr">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>Dridalia Moda Feminina | Loja Virtual Oficial</title>
-  <meta name="description" content="Compre moda feminina elegante, conjuntos e lançamentos na Dridalia Moda Feminina.">
-  
-  <!-- TAILWIND CSS & FONTAWESOME -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- ALPINE.JS -->
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-  <style>
-    .font-grife { font-family: 'Playfair Display', Georgia, serif; }
-    .aspect-product { aspect-ratio: 3 / 4; }
-    [x-cloak] { display: none !important; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dridalia Moda Feminina | Loja Oficial</title>
+<meta name="description" content="Moda feminina elegante, conjuntos e lançamentos na Dridalia.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<style>.grife{font-family:'Playfair Display',Georgia,serif}.ap{aspect-ratio:3/4}[x-cloak]{display:none!important}</style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased font-sans" x-data="dridaliaApp()">
+<body class="bg-gray-50 text-gray-800 antialiased" x-data="loja()" x-init="init()">
 
-  <!-- POP-UP PROMOCIONAL DINÂMICO -->
-  <div x-show="config.popupAtivo && popupVisivel" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
-    <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative">
-      <button @click="popupVisivel = false" class="absolute top-3 right-3 bg-gray-900/60 hover:bg-gray-900 text-white w-8 h-8 rounded-full flex items-center justify-center z-10">
-        <i class="fa-solid fa-xmark"></i>
+<!-- POPUP -->
+<div x-show="cfg.popupAtivo && popup" x-cloak class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden relative">
+    <button @click="popup=false" class="absolute top-3 right-3 bg-gray-900/70 text-white w-8 h-8 rounded-full z-10"><i class="fa-solid fa-xmark"></i></button>
+    <img x-show="cfg.popupImagem" :src="cfg.popupImagem" class="w-full h-56 object-cover">
+    <div class="p-6 text-center space-y-3">
+      <span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-3 py-1 rounded-full uppercase" x-text="cfg.popupTag||'Oferta Especial'"></span>
+      <h3 class="text-xl font-bold" x-text="cfg.popupTitulo"></h3>
+      <p class="text-xs text-gray-600" x-text="cfg.popupTexto"></p>
+      <button @click="popup=false" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl text-xs">Aproveitar Agora</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="sticky top-0 z-40 bg-white border-b shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <button @click="menu=true" aria-label="Menu" class="p-2 text-gray-700"><i class="fa-solid fa-bars text-xl"></i></button>
+      <img x-show="cfg.logo" :src="cfg.logo" class="h-10" alt="Logo">
+      <h1 class="text-lg font-bold grife" x-text="cfg.nomeLoja"></h1>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button @click="conta=true" class="text-xs font-semibold bg-gray-100 px-3 py-2 rounded-full">
+        <i class="fa-solid fa-user-circle text-rose-600 mr-1"></i><span x-text="user?user.nome.split(' ')[0]:'Entrar'"></span>
       </button>
-      <template x-if="config.popupImagem">
-        <img :src="config.popupImagem" class="w-full h-56 object-cover">
-      </template>
-      <div class="p-6 text-center space-y-3">
-        <span class="bg-rose-100 text-rose-800 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase" x-text="config.popupTag || 'Oferta Especial'"></span>
-        <h3 class="text-xl font-bold text-gray-900" x-text="config.popupTitulo"></h3>
-        <p class="text-xs text-gray-600" x-text="config.popupTexto"></p>
-        <button @click="popupVisivel = false" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow">Aproveitar Agora</button>
-      </div>
+      <button @click="carrinho=true" aria-label="Carrinho" class="relative p-2.5 bg-rose-50 text-rose-600 rounded-full">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <span x-show="itens.length" class="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full" x-text="qtdTotal()"></span>
+      </button>
     </div>
   </div>
+</header>
 
-  <!-- HEADER DRIDALIA MODA FEMININA -->
-  <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-      
-      <div class="flex items-center space-x-3">
-        <!-- BOTÃO DE MENU DE TRÊS PAUZINHOS (HAMBÚRGUER) -->
-        <button @click="menuLateralAberto = true" class="p-2 text-gray-700 hover:text-rose-600 rounded-lg transition" title="Abrir Menu">
-          <i class="fa-solid fa-bars text-xl"></i>
-        </button>
-
-        <div class="flex items-center space-x-3 cursor-pointer" @click="painelAberto = false">
-          <template x-if="config.logo">
-            <img :src="config.logo" alt="Dridalia Logo" class="h-10 w-auto object-contain">
-          </template>
-          <h1 class="text-xl font-bold tracking-tight text-gray-900 font-grife" x-text="config.nomeLoja"></h1>
-        </div>
-      </div>
-
-      <div class="flex items-center space-x-3 sm:space-x-4">
-        <button @click="clicarMinhaConta()" class="flex items-center space-x-2 text-xs sm:text-sm font-semibold text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 px-3.5 py-2 rounded-full transition">
-          <i class="fa-solid fa-user-circle text-base text-rose-600"></i>
-          <span x-text="usuario.logado ? usuario.nome : 'Entrar / Criar Conta'"></span>
-        </button>
-
-        <button @click="carrinhoAberto = true" class="relative p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-full transition">
-          <i class="fa-solid fa-bag-shopping text-lg"></i>
-          <span x-show="carrinho.length > 0" class="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white" x-text="carrinho.reduce((acc, item) => acc + item.qtd, 0)"></span>
-        </button>
-      </div>
-
+<!-- MENU LATERAL -->
+<div x-show="menu" x-cloak class="fixed inset-0 z-50 bg-black/60 flex" @click.self="menu=false">
+  <div class="bg-white w-full max-w-xs h-full flex flex-col">
+    <div class="p-4 bg-gray-900 text-white flex justify-between items-center">
+      <b class="text-sm">Menu</b><button @click="menu=false"><i class="fa-solid fa-xmark text-xl"></i></button>
     </div>
-  </header>
-
-  <!-- MENU LATERAL (GAVETA COM POLÍTICAS E PÁGINAS) -->
-  <div x-show="menuLateralAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-start" x-cloak>
-    <div class="bg-white w-full max-w-xs h-full shadow-2xl flex flex-col justify-between">
-      <div class="p-4 bg-gray-900 text-white flex justify-between items-center">
-        <h3 class="font-bold text-sm flex items-center"><i class="fa-solid fa-bars mr-2 text-rose-500"></i>Menu Institucional</h3>
-        <button @click="menuLateralAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
-      </div>
-
-      <div class="p-4 overflow-y-auto flex-1 space-y-3">
-        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Políticas da Loja</p>
-        <button @click="abrirPaginaInstitucional('privacidade')" class="w-full text-left p-3 hover:bg-rose-50 text-xs font-semibold text-gray-700 rounded-xl transition flex items-center space-x-2">
-          <i class="fa-solid fa-shield-halved text-rose-600"></i><span>Política de Privacidade</span>
-        </button>
-        <button @click="abrirPaginaInstitucional('entrega')" class="w-full text-left p-3 hover:bg-rose-50 text-xs font-semibold text-gray-700 rounded-xl transition flex items-center space-x-2">
-          <i class="fa-solid fa-truck text-rose-600"></i><span>Política de Frete e Entrega</span>
-        </button>
-        <button @click="abrirPaginaInstitucional('devolucao')" class="w-full text-left p-3 hover:bg-rose-50 text-xs font-semibold text-gray-700 rounded-xl transition flex items-center space-x-2">
-          <i class="fa-solid fa-rotate-left text-rose-600"></i><span>Política de Trocas e Devoluções</span>
-        </button>
-
-        <template x-if="paginasAdmin.length > 0">
-          <div class="pt-4 border-t space-y-2">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Páginas Especiais</p>
-            <template x-for="pag in paginasAdmin" :key="pag.id">
-              <button @click="abrirPaginaDinamica(pag)" class="w-full text-left p-3 hover:bg-gray-100 text-xs font-semibold text-gray-800 rounded-xl transition flex items-center space-x-2">
-                <i class="fa-solid fa-file-lines text-blue-600"></i><span x-text="pag.titulo"></span>
-              </button>
-            </template>
-          </div>
-        </template>
-      </div>
-
-      <div class="p-4 border-t bg-gray-50 text-center text-[10px] text-gray-500">
-        <p x-text="config.nomeLoja + ' © 2026'"></p>
-      </div>
+    <div class="p-4 space-y-1 overflow-y-auto flex-1 text-xs font-semibold">
+      <template x-for="p in politicas" :key="p.titulo"><button @click="abrirPag(p)" class="w-full text-left p-3 hover:bg-rose-50 rounded-xl" x-text="p.titulo"></button></template>
+      <template x-for="p in paginas" :key="p.id"><button @click="abrirPag(p)" class="w-full text-left p-3 hover:bg-gray-100 rounded-xl" x-text="p.titulo"></button></template>
     </div>
   </div>
+</div>
 
-  <!-- MODAL DE VISUALIZAÇÃO DE PÁGINAS E POLÍTICAS -->
-  <div x-show="modalPaginaAberto" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
-    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-      <div class="p-4 bg-gray-900 text-white flex justify-between items-center">
-        <h3 class="font-bold text-sm" x-text="paginaAtual.titulo"></h3>
-        <button @click="modalPaginaAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
-      </div>
-      <div class="p-6 overflow-y-auto space-y-4 flex-1">
-        <template x-if="paginaAtual.imagem">
-          <img :src="paginaAtual.imagem" class="w-full h-48 object-cover rounded-2xl shadow-sm">
-        </template>
-        <p class="text-xs text-gray-700 whitespace-pre-line leading-relaxed" x-text="paginaAtual.descricao"></p>
-        
-        <template x-if="paginaAtual.link">
-          <a :href="paginaAtual.link" class="block w-full py-3 bg-rose-600 hover:bg-rose-700 text-white text-center font-bold text-xs rounded-xl shadow transition">Acessar / Comprar Agora</a>
-        </template>
-      </div>
+<!-- PÁGINA -->
+<div x-show="pag" x-cloak class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" @click.self="pag=null">
+  <div class="bg-white w-full max-w-lg rounded-3xl overflow-hidden flex flex-col max-h-[85vh]" x-show="pag">
+    <div class="p-4 bg-gray-900 text-white flex justify-between"><b class="text-sm" x-text="pag&&pag.titulo"></b><button @click="pag=null"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+    <div class="p-6 overflow-y-auto space-y-4">
+      <img x-show="pag&&pag.imagem" :src="pag&&pag.imagem" class="w-full h-48 object-cover rounded-2xl">
+      <p class="text-xs whitespace-pre-line leading-relaxed" x-text="pag&&pag.descricao"></p>
+      <a x-show="pag&&pag.link" :href="pag&&pag.link" class="block py-3 bg-rose-600 text-white text-center font-bold text-xs rounded-xl">Acessar</a>
     </div>
   </div>
+</div>
 
-  <!-- BANNER PRINCIPAL DA DRIDALIA -->
-  <section x-show="config.banner" class="relative w-full bg-gray-900 overflow-hidden">
-    <img :src="config.banner" alt="Banner Dridalia Moda Feminina" class="w-full h-48 md:h-80 object-cover opacity-85">
-  </section>
+<!-- BANNER -->
+<section x-show="cfg.banner" class="bg-gray-900"><img :src="cfg.banner" alt="Banner" class="w-full h-48 md:h-80 object-cover opacity-90"></section>
 
-  <!-- VITRINE DE PRODUTOS -->
-  <main class="max-w-7xl mx-auto px-4 py-8">
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      <template x-for="prod in produtos" :key="prod.id">
-        <article class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-lg transition duration-300 relative" x-data="{ imgAtiva: 0, corSel: prod.cores ? prod.cores[0] : '', tamSel: prod.tamanhos ? prod.tamanhos[0] : '' }">
-          
-          <!-- BARRA DE CONTROLE DO ADMIN -->
-          <template x-if="usuario.logado && usuario.email === adminEmail">
-            <div class="bg-gray-900 p-2 text-white flex justify-between items-center text-[10px] space-x-1 z-20">
-              <button @click="abrirEditarProduto(prod)" class="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded font-bold transition flex items-center space-x-1">
-                <i class="fa-solid fa-pen-to-square"></i><span>Editar</span>
-              </button>
-              <button @click="abrirFaqProduto(prod)" class="bg-amber-600 hover:bg-amber-700 px-2 py-1 rounded font-bold transition flex items-center space-x-1">
-                <i class="fa-solid fa-comments"></i><span>FAQ Chat</span>
-              </button>
-              <button @click="excluirProduto(prod.id)" class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded font-bold transition flex items-center space-x-1">
-                <i class="fa-solid fa-trash"></i><span>Excluir</span>
-              </button>
-            </div>
-          </template>
-
-          <!-- GALERIA DE IMAGENS -->
-          <div class="relative aspect-product bg-gray-100 overflow-hidden group/galeria">
-            <img :src="prod.imagens[imgAtiva] || prod.imagem" :alt="prod.nome" class="w-full h-full object-cover transition duration-500" loading="lazy">
-            
-            <button @click="falarTexto(prod.nome + '. ' + prod.descricao)" class="absolute top-3 right-3 bg-rose-600 hover:bg-rose-700 text-white p-2.5 rounded-full shadow-lg backdrop-blur-md transition z-10 flex items-center space-x-1" title="Ouvir Descrição em Áudio">
-              <i class="fa-solid fa-volume-high text-xs"></i>
-            </button>
-
-            <button x-show="usuario.logado" @click="compartilharProduto(prod)" class="absolute top-3 left-3 bg-gray-900 hover:bg-black text-white p-2.5 rounded-full shadow-md transition z-10" title="Copiar link de Afiliado">
-              <i class="fa-solid fa-share-nodes text-xs"></i>
-            </button>
-
-            <template x-if="prod.imagens && prod.imagens.length > 1">
-              <div>
-                <button @click="imgAtiva = (imgAtiva === 0) ? prod.imagens.length - 1 : imgAtiva - 1" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black text-white w-7 h-7 rounded-full flex items-center justify-center transition">
-                  <i class="fa-solid fa-chevron-left text-xs"></i>
-                </button>
-                <button @click="imgAtiva = (imgAtiva === prod.imagens.length - 1) ? 0 : imgAtiva + 1" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black text-white w-7 h-7 rounded-full flex items-center justify-center transition">
-                  <i class="fa-solid fa-chevron-right text-xs"></i>
-                </button>
-                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5 z-10">
-                  <template x-for="(img, idx) in prod.imagens" :key="idx">
-                    <button @click="imgAtiva = idx" :class="imgAtiva === idx ? 'bg-rose-600 w-4' : 'bg-white/80 w-1.5'" class="h-1.5 rounded-full transition-all duration-300"></button>
-                  </template>
-                </div>
-              </div>
-            </template>
-          </div>
-
-          <!-- Informações -->
-          <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+<!-- VITRINE -->
+<main class="max-w-7xl mx-auto px-4 py-8">
+  <p x-show="carregando" class="text-center text-sm text-gray-400 py-12">Carregando...</p>
+  <p x-show="!carregando && !produtos.length" class="text-center text-sm text-gray-400 py-12">Nenhum produto cadastrado ainda.</p>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <template x-for="p in produtos" :key="p.id">
+      <article class="bg-white rounded-2xl shadow-sm border overflow-hidden flex flex-col" x-data="{i:0,cor:(p.cores||[])[0]||'',tam:(p.tamanhos||[])[0]||''}">
+        <div class="relative ap bg-gray-100">
+          <img :src="(p.imagens||[])[i]" :alt="p.nome" class="w-full h-full object-cover" loading="lazy">
+          <button @click="falar(p.nome+'. '+(p.descricao||''))" class="absolute top-3 right-3 bg-rose-600 text-white w-9 h-9 rounded-full" aria-label="Ouvir"><i class="fa-solid fa-volume-high text-xs"></i></button>
+          <button x-show="user" @click="linkProd(p)" class="absolute top-3 left-3 bg-gray-900 text-white w-9 h-9 rounded-full" aria-label="Link afiliado"><i class="fa-solid fa-share-nodes text-xs"></i></button>
+          <template x-if="(p.imagens||[]).length>1">
             <div>
-              <h2 class="font-bold text-gray-900 text-base line-clamp-1" x-text="prod.nome"></h2>
-            </div>
-
-            <div class="space-y-2 border-t pt-2">
-              <div class="flex items-center justify-between text-[11px]">
-                <span class="font-bold text-gray-600">Tamanho:</span>
-                <div class="flex space-x-1">
-                  <template x-for="tam in (prod.tamanhos || ['P', 'M', 'G', 'GG'])" :key="tam">
-                    <button @click="tamSel = tam" :class="tamSel === tam ? 'bg-rose-600 text-white font-bold' : 'bg-gray-100 text-gray-700'" class="px-2 py-0.5 rounded-md text-[10px] transition" x-text="tam"></button>
-                  </template>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between text-[11px]">
-                <span class="font-bold text-gray-600">Cor:</span>
-                <div class="flex space-x-1">
-                  <template x-for="cor in (prod.cores || ['Rosa', 'Preto', 'Nude'])" :key="cor">
-                    <button @click="corSel = cor" :class="corSel === cor ? 'border-rose-600 font-bold text-rose-600 border-2' : 'border-gray-200 text-gray-600 border'" class="px-2 py-0.5 rounded-md text-[10px] bg-white transition" x-text="cor"></button>
-                  </template>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <span class="text-xl font-extrabold text-gray-900" x-text="'R$ ' + prod.preco.toFixed(2)"></span>
-
-              <div class="grid grid-cols-2 gap-2 mt-3">
-                <button @click="abrirChatbot(prod)" class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 transition">
-                  <i class="fa-solid fa-comments text-rose-600"></i>
-                  <span>Dúvidas</span>
-                </button>
-
-                <button @click="adicionarAoCarrinho(prod, corSel, tamSel)" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 shadow transition">
-                  <i class="fa-solid fa-cart-plus"></i>
-                  <span>Comprar</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-        </article>
-      </template>
-    </div>
-  </main>
-
-  <!-- DRAWER DO CARRINHO & CHECKOUT (COM ORDER BUMP) -->
-  <div x-show="carrinhoAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end" x-cloak>
-    <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between">
-      <div class="p-4 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
-        <div class="flex items-center space-x-2">
-          <i class="fa-solid fa-bag-shopping text-rose-500 text-xl"></i>
-          <h3 class="font-bold text-base">Seu Carrinho & Checkout</h3>
-        </div>
-        <button @click="carrinhoAberto = false" class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
-      </div>
-
-      <div class="p-4 overflow-y-auto flex-1 space-y-5">
-        <template x-if="carrinho.length === 0">
-          <div class="text-center py-12 text-gray-400 space-y-3">
-            <i class="fa-solid fa-basket-shopping text-4xl"></i>
-            <p class="text-sm">Seu carrinho está vazio.</p>
-          </div>
-        </template>
-
-        <!-- ITENS DO CARRINHO -->
-        <template x-for="(item, index) in carrinho" :key="index">
-          <div class="flex items-center space-x-3 border-b pb-3">
-            <img :src="item.imagens ? item.imagens[0] : item.imagem" class="w-16 h-16 object-cover rounded-xl border">
-            <div class="flex-1">
-              <h4 class="font-bold text-xs text-gray-900" x-text="item.nome"></h4>
-              <div class="flex space-x-2 mt-0.5 text-[10px] text-gray-500">
-                <span>Tam: <strong class="text-gray-800" x-text="item.tamanho"></strong></span>
-                <span>•</span>
-                <span>Cor: <strong class="text-gray-800" x-text="item.cor"></strong></span>
-              </div>
-              <p class="text-xs font-bold text-rose-600 mt-1" x-text="'R$ ' + (item.preco * item.qtd).toFixed(2)"></p>
-              
-              <div class="flex items-center space-x-2 mt-2">
-                <button @click="alterarQtd(index, -1)" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-xs font-bold">-</button>
-                <span class="text-xs font-bold" x-text="item.qtd"></span>
-                <button @click="alterarQtd(index, 1)" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-xs font-bold">+</button>
-              </div>
-            </div>
-            <button @click="removerDoCarrinho(index)" class="text-gray-400 hover:text-red-500 p-2"><i class="fa-solid fa-trash-can text-sm"></i></button>
-          </div>
-        </template>
-
-        <!-- ORDER BUMP -->
-        <div x-show="carrinho.length > 0" class="bg-rose-50/70 p-3.5 rounded-2xl border border-rose-200 space-y-2.5">
-          <h4 class="font-bold text-xs text-rose-900 flex items-center">
-            <i class="fa-solid fa-gift text-rose-600 mr-1.5"></i>Você também pode gostar disso (Oferta Especial):
-          </h4>
-          
-          <div class="space-y-2">
-            <template x-for="prodSugerido in produtos.slice(0, 3)" :key="prodSugerido.id">
-              <div class="bg-white p-2.5 rounded-xl border flex items-center justify-between shadow-sm">
-                <div class="flex items-center space-x-2.5 min-w-0">
-                  <img :src="prodSugerido.imagens ? prodSugerido.imagens[0] : prodSugerido.imagem" class="w-12 h-12 object-cover rounded-lg border flex-shrink-0">
-                  <div class="min-w-0">
-                    <h5 class="font-bold text-[11px] text-gray-900 truncate" x-text="prodSugerido.nome"></h5>
-                    <p class="text-[11px] font-black text-rose-600" x-text="'R$ ' + prodSugerido.preco.toFixed(2)"></p>
-                  </div>
-                </div>
-                <button @click="adicionarAoCarrinho(prodSugerido, prodSugerido.cores ? prodSugerido.cores[0] : 'Padrão', prodSugerido.tamanhos ? prodSugerido.tamanhos[0] : 'M')" class="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-lg shadow transition whitespace-nowrap">
-                  + Adicionar
-                </button>
-              </div>
-            </template>
-          </div>
-        </div>
-
-        <!-- ENDEREÇO DE ENTREGA -->
-        <div x-show="carrinho.length > 0" class="bg-gray-50 p-4 rounded-2xl border space-y-3">
-          <div class="flex items-center justify-between">
-            <h4 class="font-bold text-xs text-gray-900 flex items-center">
-              <i class="fa-solid fa-location-dot text-rose-600 mr-1.5"></i>Endereço de Entrega
-            </h4>
-            <template x-if="enderecoSalvo">
-              <button @click="editandoEndereco = !editandoEndereco" class="text-[10px] text-rose-600 font-bold underline">
-                <span x-text="editandoEndereco ? 'Cancelar' : 'Alterar Endereço'"></span>
-              </button>
-            </template>
-          </div>
-
-          <template x-if="enderecoSalvo && !editandoEndereco">
-            <div class="bg-white p-3 rounded-xl border text-xs space-y-1">
-              <p class="font-bold text-gray-800" x-text="endereco.nomeCliente + ' (' + endereco.emailCliente + ')'"></p>
-              <p class="text-gray-600" x-text="endereco.rua + ', ' + endereco.numero + ' - ' + endereco.bairro"></p>
-              <p class="text-gray-600" x-text="endereco.cidade + '/' + endereco.estado + ' - CEP: ' + endereco.cep"></p>
-              <p class="text-emerald-600 font-bold text-[11px] pt-1"><i class="fa-solid fa-truck mr-1"></i>Frete Calculado</p>
+              <button @click="i=i===0?p.imagens.length-1:i-1" class="absolute left-2 top-1/2 bg-black/50 text-white w-7 h-7 rounded-full"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+              <button @click="i=i===p.imagens.length-1?0:i+1" class="absolute right-2 top-1/2 bg-black/50 text-white w-7 h-7 rounded-full"><i class="fa-solid fa-chevron-right text-xs"></i></button>
             </div>
           </template>
-
-          <div x-show="!enderecoSalvo || editandoEndereco" class="space-y-2">
-            <div class="grid grid-cols-2 gap-2">
-              <input type="text" x-model="endereco.nomeCliente" placeholder="Nome Completo" class="p-2 border rounded-xl text-xs bg-white">
-              <input type="email" x-model="endereco.emailCliente" placeholder="E-mail" class="p-2 border rounded-xl text-xs bg-white">
-            </div>
-            <div class="grid grid-cols-3 gap-2">
-              <input type="text" x-model="endereco.cep" @keyup="buscarCep()" placeholder="CEP" class="p-2 border rounded-xl text-xs bg-white font-mono col-span-1">
-              <input type="text" x-model="endereco.rua" placeholder="Rua" class="p-2 border rounded-xl text-xs bg-white col-span-2">
-            </div>
-            <div class="grid grid-cols-3 gap-2">
-              <input type="text" x-model="endereco.numero" placeholder="Número" class="p-2 border rounded-xl text-xs bg-white">
-              <input type="text" x-model="endereco.bairro" placeholder="Bairro" class="p-2 border rounded-xl text-xs bg-white col-span-2">
-            </div>
-            <div class="grid grid-cols-3 gap-2">
-              <input type="text" x-model="endereco.cidade" placeholder="Cidade" class="p-2 border rounded-xl text-xs bg-white col-span-2">
-              <input type="text" x-model="endereco.estado" placeholder="UF" class="p-2 border rounded-xl text-xs bg-white uppercase">
-            </div>
-            <button @click="salvarEndereco()" class="w-full py-2 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Confirmar Endereço</button>
-          </div>
         </div>
-      </div>
-
-      <div class="p-4 border-t bg-gray-50 space-y-3" x-show="carrinho.length > 0">
-        <div class="space-y-1.5 text-xs text-gray-600">
-          <div class="flex justify-between">
-            <span>Subtotal:</span>
-            <span class="font-bold text-gray-900" x-text="'R$ ' + calcularSubtotal().toFixed(2)"></span>
-          </div>
-          <div class="flex justify-between">
-            <span>Frete:</span>
-            <span class="font-bold text-emerald-600" x-text="'R$ ' + valorFrete.toFixed(2)"></span>
-          </div>
-          <div class="flex justify-between items-center pt-1 border-t">
-            <span class="font-bold text-sm text-gray-900">Total:</span>
-            <span class="font-black text-xl text-rose-600" x-text="'R$ ' + (calcularSubtotal() + valorFrete).toFixed(2)"></span>
-          </div>
-        </div>
-
-        <button @click="finalizarCompra()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
-          <i class="fa-solid fa-lock text-sm"></i>
-          <span>PAGAR AGORA (MERCADO PAGO)</span>
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- MODAL DE CONTA / PAINEL ADMIN -->
-  <div x-show="painelAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
-    <div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-      
-      <div class="p-5 bg-gray-900 text-white flex justify-between items-center">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-full bg-rose-600/20 flex items-center justify-center text-rose-400">
-            <i class="fa-solid fa-user-circle text-xl"></i>
+        <div class="p-4 space-y-3 flex-1 flex flex-col justify-between">
+          <h2 class="font-bold" x-text="p.nome"></h2>
+          <div class="space-y-2 text-[11px]">
+            <div class="flex justify-between items-center"><b class="text-gray-600">Tamanho</b>
+              <div class="flex gap-1"><template x-for="t in (p.tamanhos||[])" :key="t"><button @click="tam=t" :class="tam===t?'bg-rose-600 text-white':'bg-gray-100'" class="px-2 py-0.5 rounded-md" x-text="t"></button></template></div></div>
+            <div class="flex justify-between items-center"><b class="text-gray-600">Cor</b>
+              <div class="flex gap-1"><template x-for="c in (p.cores||[])" :key="c"><button @click="cor=c" :class="cor===c?'border-rose-600 text-rose-600 font-bold':'border-gray-200'" class="px-2 py-0.5 rounded-md border bg-white" x-text="c"></button></template></div></div>
           </div>
           <div>
-            <h2 class="font-bold text-lg" x-text="usuario.logado ? 'Sua Conta Dridalia' : (modoConta === 'login' ? 'Entrar na Conta' : 'Criar Conta')"></h2>
-            <p class="text-xs text-gray-400" x-text="usuario.logado ? usuario.email : 'Acesse sua conta'"></p>
+            <span class="text-xl font-extrabold" x-text="brl(p.preco)"></span>
+            <button @click="add(p,cor,tam)" class="w-full mt-2 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl"><i class="fa-solid fa-cart-plus mr-1"></i>Comprar</button>
           </div>
         </div>
-        <button @click="painelAberto = false" class="text-gray-400 hover:text-white p-2 transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
-      </div>
+        <div x-show="user&&user.admin" class="bg-gray-900 p-2 flex gap-1 text-[10px] text-white">
+          <button @click="editar(p)" class="bg-blue-600 px-2 py-1 rounded font-bold">Editar</button>
+          <button @click="excluir(p.id)" class="bg-red-600 px-2 py-1 rounded font-bold">Excluir</button>
+        </div>
+      </article>
+    </template>
+  </div>
+</main>
 
-      <template x-if="usuario.logado">
-        <div class="flex border-b border-gray-200 bg-gray-50 text-xs sm:text-sm overflow-x-auto">
-          <button @click="abaPainel = 'compras'" :class="abaPainel === 'compras' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-white' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
-            <i class="fa-solid fa-bag-shopping mr-1.5"></i>Minhas Compras
-          </button>
-
-          <button @click="abaPainel = 'afiliado'" :class="abaPainel === 'afiliado' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-white' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
-            <i class="fa-solid fa-sack-dollar mr-1.5 text-emerald-600"></i>Painel de Afiliado
-          </button>
-
-          <template x-if="usuario.email === adminEmail">
-            <div class="flex">
-              <button @click="abaPainel = 'admin'" :class="abaPainel === 'admin' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-rose-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
-                <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Admin Loja
-              </button>
-              <button @click="abaPainel = 'paginas'" :class="abaPainel === 'paginas' ? 'border-b-2 border-blue-600 font-bold text-blue-600 bg-blue-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
-                <i class="fa-solid fa-file-circle-plus mr-1.5 text-blue-600"></i>📄 Páginas
-              </button>
-              <button @click="abaPainel = 'metricas'" :class="abaPainel === 'metricas' ? 'border-b-2 border-purple-600 font-bold text-purple-600 bg-purple-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
-                <i class="fa-solid fa-chart-line mr-1.5 text-purple-600"></i>📊 Métricas
-              </button>
+<!-- CARRINHO -->
+<div x-show="carrinho" x-cloak class="fixed inset-0 z-50 bg-black/60 flex justify-end" @click.self="carrinho=false">
+  <div class="bg-white w-full max-w-md h-full flex flex-col">
+    <div class="p-4 bg-gray-900 text-white flex justify-between"><b>Carrinho</b><button @click="carrinho=false"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+    <div class="p-4 overflow-y-auto flex-1 space-y-4">
+      <p x-show="!itens.length" class="text-center text-gray-400 py-12 text-sm">Seu carrinho está vazio.</p>
+      <template x-for="(it,n) in itens" :key="n">
+        <div class="flex items-center gap-3 border-b pb-3">
+          <img :src="it.img" class="w-16 h-16 object-cover rounded-xl">
+          <div class="flex-1 text-xs">
+            <b x-text="it.nome"></b>
+            <p class="text-gray-500" x-text="'Tam '+it.tam+' • '+it.cor"></p>
+            <p class="font-bold text-rose-600" x-text="brl(it.preco*it.qtd)"></p>
+            <div class="flex items-center gap-2 mt-1">
+              <button @click="qtd(n,-1)" class="w-6 h-6 bg-gray-100 rounded-lg font-bold">-</button><b x-text="it.qtd"></b>
+              <button @click="qtd(n,1)" class="w-6 h-6 bg-gray-100 rounded-lg font-bold">+</button>
             </div>
-          </template>
-
-          <button @click="deslogar()" class="px-5 py-3.5 text-red-500 font-semibold ml-auto">Sair</button>
+          </div>
+          <button @click="itens.splice(n,1);salvarCar()" class="text-gray-400"><i class="fa-solid fa-trash-can"></i></button>
         </div>
       </template>
+      <div x-show="itens.length" class="bg-gray-50 p-4 rounded-2xl border space-y-2">
+        <h4 class="font-bold text-xs"><i class="fa-solid fa-location-dot text-rose-600 mr-1"></i>Entrega</h4>
+        <div class="grid grid-cols-2 gap-2">
+          <input x-model="end.nome" placeholder="Nome completo" class="p-2 border rounded-xl text-xs">
+          <input x-model="end.email" type="email" placeholder="E-mail" class="p-2 border rounded-xl text-xs">
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <input x-model="end.cep" @input="cep()" placeholder="CEP" inputmode="numeric" class="p-2 border rounded-xl text-xs">
+          <input x-model="end.rua" placeholder="Rua" class="p-2 border rounded-xl text-xs col-span-2">
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <input x-model="end.numero" placeholder="Nº" class="p-2 border rounded-xl text-xs">
+          <input x-model="end.bairro" placeholder="Bairro" class="p-2 border rounded-xl text-xs col-span-2">
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <input x-model="end.cidade" placeholder="Cidade" class="p-2 border rounded-xl text-xs col-span-2">
+          <input x-model="end.uf" maxlength="2" placeholder="UF" class="p-2 border rounded-xl text-xs uppercase">
+        </div>
+      </div>
+    </div>
+    <div class="p-4 border-t bg-gray-50 space-y-2" x-show="itens.length">
+      <div class="flex justify-between text-xs"><span>Subtotal</span><b x-text="brl(subtotal())"></b></div>
+      <div class="flex justify-between text-xs"><span>Frete</span><b x-text="brl(frete)"></b></div>
+      <div class="flex justify-between"><b>Total</b><b class="text-xl text-rose-600" x-text="brl(subtotal()+frete)"></b></div>
+      <button @click="pagar()" :disabled="pagando" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl"><i class="fa-solid fa-lock mr-1"></i><span x-text="pagando?'Aguarde...':'PAGAR COM MERCADO PAGO'"></span></button>
+    </div>
+  </div>
+</div>
 
-      <div class="p-6 overflow-y-auto flex-1">
-        <template x-if="!usuario.logado">
-          <div class="max-w-md mx-auto py-4 space-y-6">
-            <div x-show="modoConta === 'login'" class="space-y-4">
-              <div class="text-center">
-                <h3 class="text-xl font-bold text-gray-900">Entrar na Conta</h3>
-              </div>
-              <form @submit.prevent="fazerLogin()" class="space-y-3">
-                <input type="email" x-model="formLogin.email" required placeholder="E-mail" class="w-full p-3 border rounded-xl text-sm">
-                <input type="password" x-model="formLogin.senha" required placeholder="Senha" class="w-full p-3 border rounded-xl text-sm">
-                <button type="submit" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl shadow">Entrar</button>
-              </form>
-              <p class="text-center text-xs text-gray-600">Não tem conta? <button @click="modoConta = 'cadastro'" class="text-rose-600 font-bold underline">Criar Conta</button></p>
-            </div>
-
-            <div x-show="modoConta === 'cadastro'" class="space-y-4">
-              <div class="text-center">
-                <h3 class="text-xl font-bold text-gray-900">Criar Conta</h3>
-              </div>
-              <form @submit.prevent="fazerCadastro()" class="space-y-3">
-                <input type="text" x-model="formCadastro.nome" required placeholder="Nome Completo" class="w-full p-3 border rounded-xl text-sm">
-                <input type="email" x-model="formCadastro.email" required placeholder="E-mail" class="w-full p-3 border rounded-xl text-sm">
-                <input type="password" x-model="formCadastro.senha" required placeholder="Senha" class="w-full p-3 border rounded-xl text-sm">
-                <button type="submit" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl shadow">Cadastrar</button>
-              </form>
-            </div>
-          </div>
-        </template>
-
-        <template x-if="usuario.logado">
-          <div>
-            <div x-show="abaPainel === 'compras'" class="space-y-4">
-              <h3 class="font-bold text-gray-900 text-base">Seus Pedidos</h3>
-              <div class="bg-gray-50 border border-dashed rounded-2xl p-8 text-center text-xs text-gray-500">
-                <p>Nenhum pedido realizado ainda.</p>
-              </div>
-            </div>
-
-            <div x-show="abaPainel === 'afiliado'" class="space-y-5">
-              <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                <i class="fa-solid fa-sack-dollar text-emerald-600 mr-2"></i>Painel de Afiliado
-              </h3>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="bg-emerald-50 border p-4 rounded-2xl">
-                  <span class="text-[10px] font-bold text-emerald-800 uppercase">Comissões</span>
-                  <p class="text-xl font-bold text-emerald-600 mt-1" x-text="'R$ ' + usuario.ganhosAfiliado.toFixed(2)"></p>
-                </div>
-                <div class="bg-blue-50 border p-4 rounded-2xl">
-                  <span class="text-[10px] font-bold text-blue-800 uppercase">Vendas</span>
-                  <p class="text-xl font-bold text-blue-600 mt-1" x-text="usuario.vendasAfiliado"></p>
-                </div>
-                <div class="bg-purple-50 border p-4 rounded-2xl">
-                  <span class="text-[10px] font-bold text-purple-800 uppercase">Código Único</span>
-                  <p class="text-lg font-mono font-bold text-purple-600 mt-1" x-text="usuario.codigoAfiliado"></p>
-                </div>
-              </div>
-              <div class="bg-gray-50 border p-4 rounded-2xl space-y-2">
-                <label class="block text-xs font-semibold text-gray-700">Seu Link de Afiliado</label>
-                <div class="flex space-x-2">
-                  <input type="text" readonly :value="window.location.origin + '?ref=' + usuario.codigoAfiliado" class="w-full p-2.5 border rounded-xl bg-white text-xs font-mono text-gray-700">
-                  <button @click="copiarTexto(window.location.origin + '?ref=' + usuario.codigoAfiliado)" class="px-4 py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl">Copiar</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- ABA DE GESTÃO DE PÁGINAS -->
-            <div x-show="abaPainel === 'paginas'" class="space-y-6">
-              <div class="border-b pb-3">
-                <h3 class="font-bold text-gray-900 text-lg">Criar e Gerenciar Páginas da Loja</h3>
-              </div>
-              <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-3">
-                <h4 class="font-bold text-xs text-blue-900"><i class="fa-solid fa-plus-circle mr-1.5"></i>Nova Página Personalizada</h4>
-                <input type="text" x-model="novaPagina.titulo" placeholder="Título da Página" class="w-full p-2.5 border rounded-xl text-xs bg-white">
-                <input type="text" x-model="novaPagina.imagem" placeholder="URL da Imagem da Página" class="w-full p-2.5 border rounded-xl text-xs bg-white">
-                <textarea x-model="novaPagina.descricao" placeholder="Descrição / Conteúdo..." class="w-full p-2.5 border rounded-xl text-xs bg-white h-20"></textarea>
-                <input type="text" x-model="novaPagina.link" placeholder="Link de Destino do Botão" class="w-full p-2.5 border rounded-xl text-xs bg-white">
-                <button @click="adicionarPaginaAdmin()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow">Criar Página</button>
-              </div>
-
-              <div class="space-y-2">
-                <h4 class="font-bold text-xs text-gray-700">Páginas Criadas:</h4>
-                <template x-for="(p, index) in paginasAdmin" :key="p.id">
-                  <div class="p-3 bg-white border rounded-xl flex items-center justify-between">
-                    <div>
-                      <h5 class="font-bold text-xs text-gray-900" x-text="p.titulo"></h5>
-                    </div>
-                    <button @click="excluirPaginaAdmin(index)" class="text-red-500 text-xs p-2"><i class="fa-solid fa-trash-can"></i></button>
-                  </div>
-                </template>
-              </div>
-            </div>
-
-            <!-- MENU DE MÉTRICAS -->
-            <div x-show="abaPainel === 'metricas'" class="space-y-6">
-              <div class="border-b pb-3 flex justify-between items-center">
-                <h3 class="font-bold text-gray-900 text-lg">Métricas de Cliques e Tráfego</h3>
-                <button @click="limparMetricas()" class="bg-red-100 text-red-700 text-xs px-3 py-1.5 rounded-xl font-bold">Limpar</button>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="bg-purple-50 border p-4 rounded-2xl">
-                  <span class="text-[10px] font-bold text-purple-800 uppercase">Total de Cliques</span>
-                  <p class="text-2xl font-black text-purple-600 mt-1" x-text="metricasCliques.length"></p>
-                </div>
-              </div>
-            </div>
-
-            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (COM SUPER FRETE) -->
-            <div x-show="abaPainel === 'admin'" class="space-y-6">
-              <div class="border-b pb-3 flex justify-between items-center">
-                <div>
-                  <h3 class="font-bold text-gray-900 text-lg">Painel de Controle Administrador</h3>
-                  <p class="text-xs text-gray-500">Gerencie Pop-up, Mercado Pago, Frete e Produtos.</p>
-                </div>
-                <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Admin Supremo</span>
-              </div>
-
-              <!-- GESTÃO DO POP-UP -->
-              <div class="bg-amber-50/60 p-4 rounded-2xl border border-amber-200 space-y-3">
-                <div class="flex items-center justify-between">
-                  <h4 class="font-bold text-xs text-amber-900"><i class="fa-solid fa-bullhorn mr-2"></i>Pop-up Promocional</h4>
-                  <label class="flex items-center space-x-2 text-xs font-semibold cursor-pointer">
-                    <input type="checkbox" x-model="config.popupAtivo" class="rounded text-rose-600">
-                    <span>Ativar Pop-up</span>
-                  </label>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <input type="text" x-model="config.popupTag" placeholder="Tag" class="p-2 border rounded-xl text-xs bg-white">
-                  <input type="text" x-model="config.popupTitulo" placeholder="Título" class="p-2 border rounded-xl text-xs bg-white">
-                </div>
-                <input type="text" x-model="config.popupImagem" placeholder="URL da Imagem" class="w-full p-2 border rounded-xl text-xs bg-white">
-                <textarea x-model="config.popupTexto" placeholder="Texto..." class="w-full p-2 border rounded-xl text-xs bg-white h-16"></textarea>
-              </div>
-
-              <!-- MERCADO PAGO -->
-              <div class="bg-rose-50/60 p-4 rounded-2xl border border-rose-200 space-y-4">
-                <h4 class="font-bold text-xs text-rose-900"><i class="fa-solid fa-credit-card mr-2"></i>Mercado Pago</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input type="text" x-model="config.mercadopagoPublicKey" placeholder="Public Key" class="p-2.5 border rounded-xl text-xs bg-white">
-                  <input type="password" x-model="config.mercadopagoAccessToken" placeholder="Access Token" class="p-2.5 border rounded-xl text-xs bg-white">
-                </div>
-              </div>
-
-              <!-- CONFIGURAÇÃO DE FRETE (COM SUPER FRETE ADICIONADO) -->
-              <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-4">
-                <h4 class="font-bold text-xs text-blue-900"><i class="fa-solid fa-truck-fast mr-2"></i>Integração de Fretes</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Plataforma de Frete Principal</label>
-                    <select x-model="config.freteEmpresa" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                      <option value="superfrete">Super Frete</option>
-                      <option value="melhorenvio">Melhor Envio</option>
-                      <option value="frenet">Frenet API</option>
-                      <option value="correios">Correios Direct API</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Token da API de Frete</label>
-                    <input type="password" x-model="config.freteToken" placeholder="Cole o token da API" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                  </div>
-                </div>
-              </div>
-
-              <!-- CADASTRAR PRODUTOS -->
-              <div class="bg-gray-50 p-4 rounded-2xl border space-y-3">
-                <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-plus-circle text-emerald-600 mr-1.5"></i>Cadastrar Novo Produto (até 5 Imagens)</h4>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <input type="text" x-model="novoProd.nome" placeholder="Nome do Produto" class="p-2 border rounded-xl text-xs bg-white">
-                  <input type="number" x-model.number="novoProd.preco" placeholder="Preço (R$)" class="p-2 border rounded-xl text-xs bg-white">
-                </div>
-
-                <div class="space-y-1.5">
-                  <label class="text-[10px] font-bold text-gray-600">URLs das Imagens:</label>
-                  <input type="text" x-model="novoProd.img1" placeholder="URL da Imagem 1 (Principal)" class="w-full p-2 border rounded-xl text-xs bg-white">
-                  <input type="text" x-model="novoProd.img2" placeholder="URL da Imagem 2 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
-                  <input type="text" x-model="novoProd.img3" placeholder="URL da Imagem 3 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
-                  <input type="text" x-model="novoProd.img4" placeholder="URL da Imagem 4 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
-                  <input type="text" x-model="novoProd.img5" placeholder="URL da Imagem 5 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
-                </div>
-
-                <textarea x-model="novoProd.descricao" placeholder="Descrição do produto..." class="w-full p-2 border rounded-xl text-xs bg-white h-16"></textarea>
-                <button @click="adicionarProduto()" class="w-full py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Cadastrar Produto</button>
-              </div>
-
-              <button @click="salvarConfiguracoes()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition">Salvar Alterações da Loja</button>
-            </div>
-          </div>
-        </template>
+<!-- CONTA / ADMIN -->
+<div x-show="conta" x-cloak class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+  <div class="bg-white w-full max-w-3xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div class="p-4 bg-gray-900 text-white flex justify-between items-center">
+      <div><b x-text="user?'Sua Conta':(modo==='login'?'Entrar':'Criar Conta')"></b><p class="text-xs text-gray-400" x-text="user?user.email:''"></p></div>
+      <button @click="conta=false"><i class="fa-solid fa-xmark text-2xl"></i></button>
+    </div>
+    <div x-show="user" class="flex border-b bg-gray-50 text-xs overflow-x-auto">
+      <button @click="aba='afiliado'" :class="aba==='afiliado'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Afiliado</button>
+      <template x-if="user&&user.admin"><div class="flex">
+        <button @click="aba='produtos'" :class="aba==='produtos'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Produto</button>
+        <button @click="aba='paginas'" :class="aba==='paginas'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Páginas</button>
+        <button @click="aba='loja'" :class="aba==='loja'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Loja</button>
+      </div></template>
+      <button @click="sair()" class="px-5 py-3 text-red-500 font-semibold ml-auto">Sair</button>
+    </div>
+    <div class="p-6 overflow-y-auto flex-1 text-xs">
+      <!-- login/cadastro -->
+      <div x-show="!user" class="max-w-sm mx-auto space-y-3">
+        <input x-show="modo==='cadastro'" x-model="f.nome" placeholder="Nome completo" class="w-full p-3 border rounded-xl text-sm">
+        <input x-model="f.email" type="email" placeholder="E-mail" class="w-full p-3 border rounded-xl text-sm">
+        <input x-model="f.senha" type="password" placeholder="Senha (mín. 6)" class="w-full p-3 border rounded-xl text-sm" @keyup.enter="entrar()">
+        <p x-show="erro" class="text-red-600" x-text="erro"></p>
+        <button @click="entrar()" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl" x-text="modo==='login'?'Entrar':'Cadastrar'"></button>
+        <p class="text-center text-gray-600" x-show="modo==='login'">Sem conta? <button @click="modo='cadastro';erro=''" class="text-rose-600 font-bold underline">Criar conta</button></p>
+        <p class="text-center text-gray-600" x-show="modo==='cadastro'">Já tem conta? <button @click="modo='login';erro=''" class="text-rose-600 font-bold underline">Entrar</button></p>
+      </div>
+      <!-- afiliado -->
+      <div x-show="user&&aba==='afiliado'" class="space-y-3">
+        <div class="bg-purple-50 border p-4 rounded-2xl"><span class="text-[10px] font-bold text-purple-800 uppercase">Seu código</span><p class="text-lg font-mono font-bold text-purple-600" x-text="user&&user.codigo"></p></div>
+        <div class="flex gap-2"><input readonly :value="user?location.origin+'?ref='+user.codigo:''" class="w-full p-2.5 border rounded-xl font-mono"><button @click="copiar(location.origin+'?ref='+user.codigo)" class="px-4 bg-gray-900 text-white font-bold rounded-xl">Copiar</button></div>
+      </div>
+      <!-- produtos (admin) -->
+      <div x-show="user&&user.admin&&aba==='produtos'" class="space-y-2">
+        <b x-text="pf.id?'Editar produto':'Novo produto'"></b>
+        <div class="grid grid-cols-2 gap-2"><input x-model="pf.nome" placeholder="Nome" class="p-2 border rounded-xl"><input x-model.number="pf.preco" type="number" step="0.01" placeholder="Preço" class="p-2 border rounded-xl"></div>
+        <div class="grid grid-cols-2 gap-2"><input x-model="pf.tamanhos" placeholder="Tamanhos: P,M,G" class="p-2 border rounded-xl"><input x-model="pf.cores" placeholder="Cores: Rosa,Preto" class="p-2 border rounded-xl"></div>
+        <textarea x-model="pf.descricao" placeholder="Descrição" class="w-full p-2 border rounded-xl h-16"></textarea>
+        <div class="flex flex-wrap gap-2">
+          <template x-for="(im,n) in pf.imagens" :key="im"><div class="relative"><img :src="im" class="w-16 h-20 object-cover rounded-lg"><button @click="pf.imagens.splice(n,1)" class="absolute -top-1 -right-1 bg-red-600 text-white w-5 h-5 rounded-full text-[10px]">×</button></div></template>
+        </div>
+        <label class="block"><span class="text-gray-600">Fotos (envia para o R2, até 5)</span><input type="file" accept="image/*" multiple @change="subir($event)" class="block w-full mt-1"></label>
+        <div class="flex gap-2"><button @click="salvarProd()" class="flex-1 py-2.5 bg-gray-900 text-white font-bold rounded-xl">Salvar produto</button><button x-show="pf.id" @click="zerarPf()" class="px-4 bg-gray-200 rounded-xl">Cancelar</button></div>
+      </div>
+      <!-- páginas (admin) -->
+      <div x-show="user&&user.admin&&aba==='paginas'" class="space-y-2">
+        <input x-model="nf.titulo" placeholder="Título" class="w-full p-2 border rounded-xl">
+        <input x-model="nf.imagem" placeholder="URL da imagem" class="w-full p-2 border rounded-xl">
+        <textarea x-model="nf.descricao" placeholder="Conteúdo" class="w-full p-2 border rounded-xl h-20"></textarea>
+        <input x-model="nf.link" placeholder="Link do botão (opcional)" class="w-full p-2 border rounded-xl">
+        <button @click="salvarPag()" class="w-full py-2.5 bg-blue-600 text-white font-bold rounded-xl">Criar página</button>
+        <template x-for="p in paginas" :key="p.id"><div class="p-3 border rounded-xl flex justify-between"><b x-text="p.titulo"></b><button @click="excluirPag(p.id)" class="text-red-500"><i class="fa-solid fa-trash-can"></i></button></div></template>
+      </div>
+      <!-- loja (admin) -->
+      <div x-show="user&&user.admin&&aba==='loja'" class="space-y-2">
+        <input x-model="cfg.nomeLoja" placeholder="Nome da loja" class="w-full p-2 border rounded-xl">
+        <input x-model="cfg.logo" placeholder="URL do logo" class="w-full p-2 border rounded-xl">
+        <input x-model="cfg.banner" placeholder="URL do banner" class="w-full p-2 border rounded-xl">
+        <label class="flex items-center gap-2 font-semibold"><input type="checkbox" x-model="cfg.popupAtivo"> Pop-up ativo</label>
+        <div class="grid grid-cols-2 gap-2"><input x-model="cfg.popupTag" placeholder="Tag" class="p-2 border rounded-xl"><input x-model="cfg.popupTitulo" placeholder="Título" class="p-2 border rounded-xl"></div>
+        <input x-model="cfg.popupImagem" placeholder="URL imagem pop-up" class="w-full p-2 border rounded-xl">
+        <textarea x-model="cfg.popupTexto" placeholder="Texto" class="w-full p-2 border rounded-xl h-16"></textarea>
+        <p class="text-gray-500">Mercado Pago e frete ficam nos Secrets do Worker, nunca aqui.</p>
+        <button @click="salvarCfg()" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl">Salvar loja</button>
       </div>
     </div>
   </div>
+</div>
 
-  <footer class="bg-white border-t border-gray-200 py-8 mt-16 text-center text-xs text-gray-500">
-    <div class="max-w-7xl mx-auto px-4">
-      <p class="font-bold text-gray-800" x-text="config.nomeLoja + ' © 2026'"></p>
-    </div>
-  </footer>
+<footer class="bg-white border-t py-8 mt-16 text-center text-xs text-gray-500"><b class="text-gray-800" x-text="cfg.nomeLoja+' © '+new Date().getFullYear()"></b></footer>
 
-  <script>
-    function dridaliaApp() {
-      return {
-        adminEmail: 'jeanaguiar636@gmail.com',
+<script>
+const API='https://dridalia-api.bmlimp8.workers.dev/api/';
+function loja(){return{
+  cfg:{nomeLoja:'Dridalia Moda Feminina',logo:'',banner:'',popupAtivo:false,popupTag:'',popupTitulo:'',popupTexto:'',popupImagem:''},
+  produtos:[],paginas:[],user:null,carregando:true,
+  menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,
+  f:{nome:'',email:'',senha:''},itens:[],frete:15,
+  end:{nome:'',email:'',cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''},
+  pf:{id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:[]},
+  nf:{titulo:'',imagem:'',descricao:'',link:''},
+  politicas:[
+    {titulo:'Política de Privacidade',descricao:'Respeitamos a sua privacidade e usamos seus dados apenas para processar pedidos e atendimento.'},
+    {titulo:'Frete e Entrega',descricao:'Enviamos para todo o Brasil via Super Frete e Correios, em até 24h úteis após a confirmação do pagamento.'},
+    {titulo:'Trocas e Devoluções',descricao:'Você tem até 7 dias corridos após o recebimento para solicitar troca ou devolução.'}],
 
-        painelAberto: false,
-        carrinhoAberto: false,
-        popupVisivel: true,
-        chatbotAberto: false,
-        modalFaqProdutoAberto: false,
-        modalEditProdutoAberto: false,
-        menuLateralAberto: false,
-        modalPaginaAberto: false,
-        modoConta: 'login',
-        abaPainel: 'compras',
+  async api(path,method='GET',body){
+    const h={};const t=localStorage.getItem('dri_token');if(t)h.authorization='Bearer '+t;
+    let b;if(body instanceof File){b=body;h['content-type']=body.type}else if(body){b=JSON.stringify(body);h['content-type']='application/json'}
+    const r=await fetch(API+path,{method,headers:h,body:b});const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(d.erro||'Erro '+r.status);return d},
 
-        formLogin: { email: '', senha: '' },
-        formCadastro: { nome: '', email: '', senha: '' },
-
-        usuario: {
-          logado: false,
-          nome: '',
-          email: '',
-          codigoAfiliado: '',
-          ganhosAfiliado: 0,
-          vendasAfiliado: 0
-        },
-
-        enderecoSalvo: false,
-        editandoEndereco: false,
-        valorFrete: 15.00,
-        endereco: { nomeCliente: '', emailCliente: '', cep: '', rua: '', numero: '', bairro: '', cidade: '', estado: '' },
-
-        config: {
-          nomeLoja: 'Dridalia Moda Feminina',
-          logo: '',
-          banner: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200',
-          popupAtivo: true,
-          popupTag: 'Oferta Especial',
-          popupTitulo: 'Conjunto em Destaque!',
-          popupTexto: 'Aproveite o preço promocional exclusivo.',
-          popupImagem: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600',
-          mercadopagoPublicKey: '',
-          mercadopagoAccessToken: '',
-          freteEmpresa: 'superfrete',
-          freteToken: ''
-        },
-
-        faqsPadrao: [
-          { pergunta: 'Qual o tecido / material?', resposta: 'Nossos produtos são confeccionados em tecidos nobres como moletinho premium e alfaiataria.' },
-          { pergunta: 'Tabela de Tamanhos', resposta: 'Trabalhamos com P (36/38), M (40), G (42) e GG (44).' },
-          { pergunta: 'Prazo de Entrega', resposta: 'Enviamos em até 24 horas úteis após a confirmação do pagamento.' }
-        ],
-
-        produtoChat: null,
-        mensagemChat: '',
-        chatMensagens: [],
-
-        prodEditandoFaq: null,
-        novaFaqProd: { pergunta: '', resposta: '' },
-        prodEmEdicao: null,
-        
-        novoProd: { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' },
-
-        paginaAtual: { titulo: '', imagem: '', descricao: '', link: '' },
-        novaPagina: { titulo: '', imagem: '', descricao: '', link: '' },
-        paginasAdmin: [],
-
-        produtos: [
-          {
-            id: 1,
-            nome: 'Conjunto Tati Moletinho Premium',
-            preco: 189.90,
-            descricao: 'Conjunto de moletinho super macio e elegante.',
-            tamanhos: ['P', 'M', 'G', 'GG'],
-            cores: ['Rosa', 'Preto', 'Nude'],
-            imagens: [
-              'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600',
-              'https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=600'
-            ],
-            faqs: [{ pergunta: 'Encolhe?', resposta: 'Não encolhe na lavagem.' }]
-          },
-          {
-            id: 2,
-            nome: 'Vestido Midi Elegance Alfaiataria',
-            preco: 239.90,
-            descricao: 'Vestido midi fluido de alfaiataria com corte impecável.',
-            tamanhos: ['P', 'M', 'G'],
-            cores: ['Preto', 'Nude', 'Vinho'],
-            imagens: [
-              'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=600'
-            ],
-            faqs: []
-          }
-        ],
-
-        carrinho: [],
-        metricasCliques: [],
-
-        init() {
-          const cfg = localStorage.getItem('dridalia_config');
-          if (cfg) this.config = JSON.parse(cfg);
-
-          const prods = localStorage.getItem('dridalia_produtos');
-          if (prods) this.produtos = JSON.parse(prods);
-
-          const sessao = localStorage.getItem('dridalia_sessao');
-          if (sessao) this.usuario = JSON.parse(sessao);
-
-          const end = localStorage.getItem('dridalia_endereco');
-          if (end) { this.endereco = JSON.parse(end); this.enderecoSalvo = true; }
-
-          const car = localStorage.getItem('dridalia_carrinho');
-          if (car) this.carrinho = JSON.parse(car);
-
-          const met = localStorage.getItem('dridalia_metricas_cliques');
-          if (met) this.metricasCliques = JSON.parse(met);
-
-          const pgs = localStorage.getItem('dridalia_paginas_admin');
-          if (pgs) this.paginasAdmin = JSON.parse(pgs);
-
-          const urlParams = new URLSearchParams(window.location.search);
-          const refParam = urlParams.get('ref');
-          const prodParam = urlParams.get('prod');
-
-          if (refParam || prodParam) {
-            const novoClique = {
-              id: Date.now(),
-              data: new Date().toLocaleString('pt-BR'),
-              usuario: this.usuario.logado ? `${this.usuario.nome} (${this.usuario.email})` : 'Visitante Anônimo',
-              ref: refParam ? refParam : 'Tráfego Direto',
-              localizacao: 'Brasil (IP Rastreado)',
-              origem: prodParam ? `Produto ID: ${prodParam}` : 'Acesso Geral à Loja'
-            };
-            this.metricasCliques.unshift(novoClique);
-            localStorage.setItem('dridalia_metricas_cliques', JSON.stringify(this.metricasCliques));
-          }
-        },
-
-        abrirPaginaInstitucional(tipo) {
-          this.menuLateralAberto = false;
-          if (tipo === 'privacidade') {
-            this.paginaAtual = {
-              titulo: 'Política de Privacidade',
-              imagem: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600',
-              descricao: 'A sua privacidade é importante para nós. É política da Dridalia respeitar a sua privacidade em relação a qualquer informação sua.'
-            };
-          } else if (tipo === 'entrega') {
-            this.paginaAtual = {
-              titulo: 'Política de Frete e Entrega',
-              imagem: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=600',
-              descricao: 'Enviamos para todo o Brasil com rapidez e segurança via Super Frete e Correios.'
-            };
-          } else if (tipo === 'devolucao') {
-            this.paginaAtual = {
-              titulo: 'Política de Trocas e Devoluções',
-              imagem: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=600',
-              descricao: 'Garantimos a sua satisfação! Você tem até 7 dias corridos após o recebimento.'
-            };
-          }
-          this.modalPaginaAberto = true;
-        },
-
-        abrirPaginaDinamica(pag) {
-          this.menuLateralAberto = false;
-          this.paginaAtual = pag;
-          this.modalPaginaAberto = true;
-        },
-
-        adicionarPaginaAdmin() {
-          if (!this.novaPagina.titulo || !this.novaPagina.descricao) {
-            alert('Preencha pelo menos o título e a descrição da página.');
-            return;
-          }
-          this.paginasAdmin.push({ id: Date.now(), ...this.novaPagina });
-          localStorage.setItem('dridalia_paginas_admin', JSON.stringify(this.paginasAdmin));
-          this.novaPagina = { titulo: '', imagem: '', descricao: '', link: '' };
-          alert('Página criada com sucesso!');
-        },
-
-        excluirPaginaAdmin(index) {
-          if (confirm('Deseja excluir esta página?')) {
-            this.paginasAdmin.splice(index, 1);
-            localStorage.setItem('dridalia_paginas_admin', JSON.stringify(this.paginasAdmin));
-          }
-        },
-
-        get faqsParaExibir() {
-          if (this.produtoChat && this.produtoChat.faqs && this.produtoChat.faqs.length > 0) {
-            return this.produtoChat.faqs;
-          }
-          return this.faqsPadrao;
-        },
-
-        limparMetricas() {
-          if (confirm('Deseja limpar todo o histórico de cliques e métricas?')) {
-            this.metricasCliques = [];
-            localStorage.removeItem('dridalia_metricas_cliques');
-          }
-        },
-
-        abrirFaqProduto(prod) {
-          this.prodEditandoFaq = prod;
-          if (!this.prodEditandoFaq.faqs) this.prodEditandoFaq.faqs = [];
-          this.modalFaqProdutoAberto = true;
-        },
-
-        adicionarFaqAoProduto() {
-          if (!this.novaFaqProd.pergunta || !this.novaFaqProd.resposta) return;
-          this.prodEditandoFaq.faqs.push({ ...this.novaFaqProd });
-          this.salvarProdutosStorage();
-          this.novaFaqProd = { pergunta: '', resposta: '' };
-        },
-
-        removerFaqDoProduto(index) {
-          this.prodEditandoFaq.faqs.splice(index, 1);
-          this.salvarProdutosStorage();
-        },
-
-        abrirEditarProduto(prod) {
-          this.prodEmEdicao = {
-            id: prod.id,
-            nome: prod.nome,
-            preco: prod.preco,
-            descricao: prod.descricao,
-            tamanhos: prod.tamanhos || ['P', 'M', 'G', 'GG'],
-            cores: prod.cores || ['Rosa', 'Preto', 'Nude'],
-            img1: prod.imagens && prod.imagens[0] ? prod.imagens[0] : '',
-            img2: prod.imagens && prod.imagens[1] ? prod.imagens[1] : '',
-            img3: prod.imagens && prod.imagens[2] ? prod.imagens[2] : '',
-            img4: prod.imagens && prod.imagens[3] ? prod.imagens[3] : '',
-            img5: prod.imagens && prod.imagens[4] ? prod.imagens[4] : '',
-            faqs: prod.faqs || []
-          };
-          this.modalEditProdutoAberto = true;
-        },
-
-        salvarEdicaoProduto() {
-          const idx = this.produtos.findIndex(p => p.id === this.prodEmEdicao.id);
-          if (idx > -1) {
-            const imgs = [this.prodEmEdicao.img1, this.prodEmEdicao.img2, this.prodEmEdicao.img3, this.prodEmEdicao.img4, this.prodEmEdicao.img5].filter(Boolean);
-            
-            this.produtos[idx] = {
-              id: this.prodEmEdicao.id,
-              nome: this.prodEmEdicao.nome,
-              preco: this.prodEmEdicao.preco,
-              descricao: this.prodEmEdicao.descricao,
-              tamanhos: this.prodEmEdicao.tamanhos,
-              cores: this.prodEmEdicao.cores,
-              imagens: imgs,
-              faqs: this.prodEmEdicao.faqs
-            };
-
-            this.salvarProdutosStorage();
-            this.modalEditProdutoAberto = false;
-            alert('Produto atualizado com sucesso!');
-          }
-        },
-
-        excluirProduto(id) {
-          if (confirm('Deseja excluir este produto?')) {
-            this.produtos = this.produtos.filter(p => p.id !== id);
-            this.salvarProdutosStorage();
-          }
-        },
-
-        salvarProdutosStorage() {
-          localStorage.setItem('dridalia_produtos', JSON.stringify(this.produtos));
-        },
-
-        buscarCep() {
-          let cep = this.endereco.cep.replace(/\D/g, '');
-          if (cep.length === 8) {
-            fetch(`https://viacep.com.br/ws/${cep}/json/`)
-              .then(res => res.json())
-              .then(data => {
-                if (!data.erro) {
-                  this.endereco.rua = data.logradouro;
-                  this.endereco.bairro = data.bairro;
-                  this.endereco.cidade = data.localidade;
-                  this.endereco.estado = data.uf;
-                }
-              });
-          }
-        },
-
-        salvarEndereco() {
-          if (!this.endereco.nomeCliente || !this.endereco.cep || !this.endereco.rua || !this.endereco.numero) {
-            alert('Preencha os dados de endereço.');
-            return;
-          }
-          if (!this.usuario.logado) {
-            const cod = 'DRI-' + Math.random().toString(36).substring(2, 7).toUpperCase();
-            this.usuario = { logado: true, nome: this.endereco.nomeCliente, email: this.endereco.emailCliente || 'cliente@dridalia.com', codigoAfiliado: cod, ganhosAfiliado: 0, vendasAfiliado: 0 };
-            localStorage.setItem('dridalia_sessao', JSON.stringify(this.usuario));
-          }
-          localStorage.setItem('dridalia_endereco', JSON.stringify(this.endereco));
-          this.enderecoSalvo = true;
-          this.editandoEndereco = false;
-        },
-
-        abrirChatbot(prod) {
-          this.produtoChat = prod;
-          this.chatMensagens = [{ tipo: 'bot', texto: `Olá! Como posso ajudar com "${prod.nome}"?` }];
-          this.chatbotAberto = true;
-        },
-
-        selecionarFaq(faq) {
-          this.chatMensagens.push({ tipo: 'usuario', texto: faq.pergunta });
-          setTimeout(() => { this.chatMensagens.push({ tipo: 'bot', texto: faq.resposta }); }, 300);
-        },
-
-        enviarMensagemLivre() {
-          if (!this.mensagemChat.trim()) return;
-          const txt = this.mensagemChat;
-          this.chatMensagens.push({ tipo: 'usuario', texto: txt });
-          this.mensagemChat = '';
-          setTimeout(() => {
-            this.chatMensagens.push({ tipo: 'bot', texto: `Obrigada pela pergunta! Nossa equipe responderá em breve.` });
-          }, 500);
-        },
-
-        clicarMinhaConta() { this.painelAberto = true; if (!this.usuario.logado) this.modoConta = 'login'; },
-
-        fazerLogin() {
-          if (!this.formLogin.email || !this.formLogin.senha) return;
-          const cod = 'DRI-' + Math.random().toString(36).substring(2, 7).toUpperCase();
-          this.usuario = { logado: true, nome: this.formLogin.email.split('@')[0], email: this.formLogin.email.toLowerCase(), codigoAfiliado: cod, ganhosAfiliado: 0, vendasAfiliado: 0 };
-          localStorage.setItem('dridalia_sessao', JSON.stringify(this.usuario));
-        },
-
-        fazerCadastro() {
-          if (!this.formCadastro.nome || !this.formCadastro.email || !this.formCadastro.senha) return;
-          const cod = 'DRI-' + Math.random().toString(36).substring(2, 7).toUpperCase();
-          this.usuario = { logado: true, nome: this.formCadastro.nome, email: this.formCadastro.email.toLowerCase(), codigoAfiliado: cod, ganhosAfiliado: 0, vendasAfiliado: 0 };
-          localStorage.setItem('dridalia_sessao', JSON.stringify(this.usuario));
-          alert('Conta criada com sucesso!');
-        },
-
-        deslogar() {
-          this.usuario = { logado: false, nome: '', email: '', codigoAfiliado: '', ganhosAfiliado: 0, vendasAfiliado: 0 };
-          localStorage.removeItem('dridalia_sessao');
-          this.painelAberto = false;
-        },
-
-        adicionarAoCarrinho(prod, cor, tamanho) {
-          const idx = this.carrinho.findIndex(i => i.id === prod.id && i.cor === cor && i.tamanho === tamanho);
-          if (idx > -1) { this.carrinho[idx].qtd++; } else { this.carrinho.push({ ...prod, cor: cor || 'Padrão', tamanho: tamanho || 'M', qtd: 1 }); }
-          this.salvarCarrinho();
-          this.carrinhoAberto = true;
-        },
-
-        alterarQtd(i, val) {
-          this.carrinho[i].qtd += val;
-          if (this.carrinho[i].qtd <= 0) { this.removerDoCarrinho(i); } else { this.salvarCarrinho(); }
-        },
-
-        removerDoCarrinho(i) { this.carrinho.splice(i, 1); this.salvarCarrinho(); },
-        calcularSubtotal() { return this.carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0); },
-        salvarCarrinho() { localStorage.setItem('dridalia_carrinho', JSON.stringify(this.carrinho)); },
-        finalizarCompra() { alert('Redirecionando para pagamento seguro...'); },
-
-        compartilharProduto(prod) {
-          const link = window.location.origin + '?prod=' + prod.id + '&ref=' + this.usuario.codigoAfiliado;
-          this.copiarTexto(link);
-        },
-
-        copiarTexto(txt) {
-          navigator.clipboard.writeText(txt);
-          alert('Link copiado com sucesso!');
-        },
-
-        adicionarProduto() {
-          if (!this.novoProd.nome || !this.novoProd.preco || !this.novoProd.img1) {
-            alert('Preencha nome, preço e pelo menos a imagem 1.');
-            return;
-          }
-          const imgs = [this.novoProd.img1, this.novoProd.img2, this.novoProd.img3, this.novoProd.img4, this.novoProd.img5].filter(Boolean);
-          
-          this.produtos.push({
-            id: Date.now(),
-            nome: this.novoProd.nome,
-            preco: this.novoProd.preco,
-            descricao: this.novoProd.descricao,
-            tamanhos: ['P', 'M', 'G', 'GG'],
-            cores: ['Rosa', 'Preto', 'Nude'],
-            imagens: imgs,
-            faqs: []
-          });
-
-          this.salvarProdutosStorage();
-          this.novoProd = { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' };
-          alert('Produto cadastrado com sucesso!');
-        },
-
-        salvarConfiguracoes() {
-          localStorage.setItem('dridalia_config', JSON.stringify(this.config));
-          alert('Configurações salvas!');
-        },
-
-        falarTexto(txt) {
-          if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(txt);
-            msg.lang = 'pt-BR';
-            window.speechSynthesis.speak(msg);
-          }
-        }
-      }
-    }
-  </script>
+  async init(){
+    try{this.itens=JSON.parse(localStorage.getItem('dri_car')||'[]');this.end=JSON.parse(localStorage.getItem('dri_end')||'null')||this.end}catch(e){}
+    const q=new URLSearchParams(location.search);if(q.get('ref'))localStorage.setItem('dri_ref',q.get('ref'));
+    try{const d=await this.api('store');this.produtos=d.produtos;this.paginas=d.paginas;Object.assign(this.cfg,d.config);this.frete=d.frete??15}catch(e){console.error(e)}
+    this.carregando=false;
+    if(localStorage.getItem('dri_token')){try{this.user=(await this.api('me')).user}catch(e){localStorage.removeItem('dri_token')}}
+    this.api('click','POST',{ref:q.get('ref'),prod:q.get('prod')}).catch(()=>{});
+  },
+  brl(v){return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})},
+  // auth
+  async entrar(){this.erro='';try{
+    const d=await this.api(this.modo==='login'?'login':'register','POST',this.f);
+    localStorage.setItem('dri_token',d.token);this.user=d.user;this.f={nome:'',email:'',senha:''};this.aba='afiliado'}catch(e){this.erro=e.message}},
+  async sair(){try{await this.api('logout','POST')}catch(e){}localStorage.removeItem('dri_token');this.user=null;this.conta=false},
+  // carrinho
+  add(p,cor,tam){const i=this.itens.findIndex(x=>x.id===p.id&&x.cor===cor&&x.tam===tam);
+    if(i>-1)this.itens[i].qtd++;else this.itens.push({id:p.id,nome:p.nome,preco:p.preco,img:(p.imagens||[])[0],cor:cor||'Padrão',tam:tam||'Único',qtd:1});
+    this.salvarCar();this.carrinho=true},
+  qtd(n,v){this.itens[n].qtd+=v;if(this.itens[n].qtd<=0)this.itens.splice(n,1);this.salvarCar()},
+  qtdTotal(){return this.itens.reduce((a,i)=>a+i.qtd,0)},
+  subtotal(){return this.itens.reduce((a,i)=>a+i.preco*i.qtd,0)},
+  salvarCar(){localStorage.setItem('dri_car',JSON.stringify(this.itens))},
+  async cep(){const c=this.end.cep.replace(/\D/g,'');if(c.length!==8)return;
+    try{const d=await (await fetch('https://viacep.com.br/ws/'+c+'/json/')).json();if(!d.erro)Object.assign(this.end,{rua:d.logradouro,bairro:d.bairro,cidade:d.localidade,uf:d.uf})}catch(e){}},
+  async pagar(){const e=this.end;
+    if(!e.nome||!e.email||!e.cep||!e.rua||!e.numero||!e.cidade||!e.uf)return alert('Preencha o endereço de entrega.');
+    this.pagando=true;localStorage.setItem('dri_end',JSON.stringify(e));
+    try{const d=await this.api('checkout','POST',{itens:this.itens.map(i=>({id:i.id,qtd:i.qtd,cor:i.cor,tam:i.tam})),endereco:e,ref:localStorage.getItem('dri_ref')});
+      location.href=d.url}catch(x){alert(x.message);this.pagando=false}},
+  // admin
+  zerarPf(){this.pf={id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:[]}},
+  editar(p){this.pf={...p,tamanhos:(p.tamanhos||[]).join(','),cores:(p.cores||[]).join(','),imagens:[...(p.imagens||[])]};this.aba='produtos';this.conta=true},
+  async subir(ev){for(const f of ev.target.files){if(this.pf.imagens.length>=5)break;
+    try{const d=await this.api('upload','POST',f);this.pf.imagens.push(d.url)}catch(e){alert(e.message)}}ev.target.value=''},
+  async salvarProd(){const l=s=>s.split(',').map(x=>x.trim()).filter(Boolean);
+    if(!this.pf.nome||!this.pf.preco||!this.pf.imagens.length)return alert('Informe nome, preço e ao menos 1 foto.');
+    try{await this.api('product','POST',{...this.pf,tamanhos:l(this.pf.tamanhos),cores:l(this.pf.cores)});await this.recarregar();this.zerarPf();alert('Produto salvo!')}catch(e){alert(e.message)}},
+  async excluir(id){if(!confirm('Excluir produto?'))return;try{await this.api('product/'+id,'DELETE');await this.recarregar()}catch(e){alert(e.message)}},
+  async salvarPag(){if(!this.nf.titulo||!this.nf.descricao)return alert('Informe título e conteúdo.');
+    try{await this.api('page','POST',this.nf);this.nf={titulo:'',imagem:'',descricao:'',link:''};await this.recarregar()}catch(e){alert(e.message)}},
+  async excluirPag(id){try{await this.api('page/'+id,'DELETE');await this.recarregar()}catch(e){alert(e.message)}},
+  async salvarCfg(){try{await this.api('config','POST',this.cfg);alert('Loja salva!')}catch(e){alert(e.message)}},
+  async recarregar(){const d=await this.api('store');this.produtos=d.produtos;this.paginas=d.paginas},
+  abrirPag(p){this.menu=false;this.pag=p},
+  linkProd(p){this.copiar(location.origin+'?prod='+p.id+'&ref='+this.user.codigo)},
+  copiar(t){navigator.clipboard.writeText(t);alert('Link copiado!')},
+  falar(t){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const m=new SpeechSynthesisUtterance(t);m.lang='pt-BR';speechSynthesis.speak(m)}
+}}
+</script>
 </body>
 </html>
