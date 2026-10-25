@@ -366,6 +366,12 @@
               <button @click="abaPainel = 'admin'" :class="abaPainel === 'admin' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-rose-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
                 <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Admin Loja
               </button>
+              <button @click="abaPainel = 'paginas'" :class="abaPainel === 'paginas' ? 'border-b-2 border-blue-600 font-bold text-blue-600 bg-blue-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
+                <i class="fa-solid fa-file-circle-plus mr-1.5 text-blue-600"></i>📄 Páginas
+              </button>
+              <button @click="abaPainel = 'metricas'" :class="abaPainel === 'metricas' ? 'border-b-2 border-purple-600 font-bold text-purple-600 bg-purple-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
+                <i class="fa-solid fa-chart-line mr-1.5 text-purple-600"></i>📊 Métricas
+              </button>
             </div>
           </template>
 
@@ -431,12 +437,51 @@
               </div>
             </div>
 
-            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (LIGADO AO WORKER/D1) -->
+            <!-- GESTÃO DE PÁGINAS -->
+            <div x-show="abaPainel === 'paginas'" class="space-y-6">
+              <div class="border-b pb-3">
+                <h3 class="font-bold text-gray-900 text-lg">Criar e Gerenciar Páginas da Loja</h3>
+              </div>
+              <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-3">
+                <h4 class="font-bold text-xs text-blue-900"><i class="fa-solid fa-plus-circle mr-1.5"></i>Nova Página Personalizada</h4>
+                <input type="text" x-model="novaPagina.titulo" placeholder="Título da Página" class="w-full p-2.5 border rounded-xl text-xs bg-white">
+                <input type="text" x-model="novaPagina.imagem" placeholder="URL da Imagem" class="w-full p-2.5 border rounded-xl text-xs bg-white">
+                <textarea x-model="novaPagina.descricao" placeholder="Descrição / Conteúdo..." class="w-full p-2.5 border rounded-xl text-xs bg-white h-20"></textarea>
+                <input type="text" x-model="novaPagina.link" placeholder="Link de Destino do Botão" class="w-full p-2.5 border rounded-xl text-xs bg-white">
+                <button @click="adicionarPaginaAdmin()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow">Criar Página</button>
+              </div>
+
+              <div class="space-y-2">
+                <h4 class="font-bold text-xs text-gray-700">Páginas Criadas:</h4>
+                <template x-for="(p, index) in paginasAdmin" :key="p.id">
+                  <div class="p-3 bg-white border rounded-xl flex items-center justify-between">
+                    <h5 class="font-bold text-xs text-gray-900" x-text="p.titulo"></h5>
+                    <button @click="excluirPaginaAdmin(index)" class="text-red-500 text-xs p-2"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- MÉTRICAS -->
+            <div x-show="abaPainel === 'metricas'" class="space-y-6">
+              <div class="border-b pb-3 flex justify-between items-center">
+                <h3 class="font-bold text-gray-900 text-lg">Métricas de Cliques e Tráfego</h3>
+                <button @click="limparMetricas()" class="bg-red-100 text-red-700 text-xs px-3 py-1.5 rounded-xl font-bold">Limpar</button>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="bg-purple-50 border p-4 rounded-2xl">
+                  <span class="text-[10px] font-bold text-purple-800 uppercase">Total de Cliques</span>
+                  <p class="text-2xl font-black text-purple-600 mt-1" x-text="metricasCliques.length"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- PAINEL ADMIN DE CONFIGURAÇÕES -->
             <div x-show="abaPainel === 'admin'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
                 <div>
-                  <h3 class="font-bold text-gray-900 text-lg">Painel de Controle Administrador (Nuvem)</h3>
-                  <p class="text-xs text-gray-500">Alterações aqui salvam diretamente no banco de dados Cloudflare D1.</p>
+                  <h3 class="font-bold text-gray-900 text-lg">Painel de Controle Administrador</h3>
+                  <p class="text-xs text-gray-500">Gerencie Logo, CEP de Origem, Frete e Pagamentos.</p>
                 </div>
                 <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Admin Supremo</span>
               </div>
@@ -496,17 +541,17 @@
 
               <!-- CADASTRAR PRODUTOS -->
               <div class="bg-gray-50 p-4 rounded-2xl border space-y-3">
-                <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-plus-circle text-emerald-600 mr-1.5"></i>Cadastrar Novo Produto na Nuvem</h4>
+                <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-plus-circle text-emerald-600 mr-1.5"></i>Cadastrar Novo Produto</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <input type="text" x-model="novoProd.nome" placeholder="Nome do Produto" class="p-2 border rounded-xl text-xs bg-white">
                   <input type="number" x-model.number="novoProd.preco" placeholder="Preço (R$)" class="p-2 border rounded-xl text-xs bg-white">
                 </div>
                 <input type="text" x-model="novoProd.img1" placeholder="URL da Imagem 1" class="w-full p-2 border rounded-xl text-xs bg-white">
                 <textarea x-model="novoProd.descricao" placeholder="Descrição..." class="w-full p-2 border rounded-xl text-xs bg-white h-16"></textarea>
-                <button @click="adicionarProduto()" class="w-full py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Cadastrar Produto na Nuvem</button>
+                <button @click="adicionarProduto()" class="w-full py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Cadastrar Produto</button>
               </div>
 
-              <button @click="salvarConfiguracoes()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition">Salvar Alterações na Nuvem</button>
+              <button @click="salvarConfiguracoes()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition">Salvar Alterações da Loja</button>
             </div>
           </div>
         </template>
@@ -524,7 +569,6 @@
     function dridaliaApp() {
       return {
         adminEmail: 'jeanaguiar636@gmail.com',
-        workerUrl: 'https://dridalia-api.bmlimp8.workers.dev',
 
         painelAberto: false,
         carrinhoAberto: false,
@@ -591,108 +635,175 @@
         novaPagina: { titulo: '', imagem: '', descricao: '', link: '' },
         paginasAdmin: [],
 
-        produtos: [],
+        produtos: [
+          {
+            id: 1,
+            nome: 'Conjunto Tati Moletinho Premium',
+            preco: 189.90,
+            descricao: 'Conjunto de moletinho super macio e elegante.',
+            tamanhos: ['P', 'M', 'G', 'GG'],
+            cores: ['Rosa', 'Preto', 'Nude'],
+            imagens: [
+              'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600',
+              'https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=600'
+            ],
+            faqs: [{ pergunta: 'Encolhe?', resposta: 'Não encolhe na lavagem.' }]
+          }
+        ],
+
         carrinho: [],
         metricasCliques: [],
 
-        async init() {
-          // Carregar Sessão local
+        init() {
+          const cfg = localStorage.getItem('dridalia_config');
+          if (cfg) {
+            try { this.config = JSON.parse(cfg); } catch(e) {}
+          }
+
+          const prods = localStorage.getItem('dridalia_produtos');
+          if (prods) {
+            try { this.produtos = JSON.parse(prods); } catch(e) {}
+          }
+
           const sessao = localStorage.getItem('dridalia_sessao');
-          if (sessao) { try { this.usuario = JSON.parse(sessao); } catch(e) {} }
+          if (sessao) {
+            try { this.usuario = JSON.parse(sessao); } catch(e) {}
+          }
 
           const end = localStorage.getItem('dridalia_endereco');
-          if (end) { try { this.endereco = JSON.parse(end); this.enderecoSalvo = true; } catch(e) {} }
+          if (end) {
+            try { this.endereco = JSON.parse(end); this.enderecoSalvo = true; } catch(e) {}
+          }
 
           const car = localStorage.getItem('dridalia_carrinho');
-          if (car) { try { this.carrinho = JSON.parse(car); } catch(e) {} }
-
-          // Buscar Configurações e Produtos do Banco D1 via Cloudflare Worker
-          try {
-            const resConfig = await fetch(this.workerUrl + '/api/config');
-            const dataConfig = await resConfig.json();
-            if (dataConfig && Object.keys(dataConfig).length > 0) {
-              this.config = { ...this.config, ...dataConfig };
-            }
-          } catch(err) {
-            console.error('Erro ao carregar config da nuvem:', err);
+          if (car) {
+            try { this.carrinho = JSON.parse(car); } catch(e) {}
           }
 
-          try {
-            const resProd = await fetch(this.workerUrl + '/api/produtos');
-            const dataProd = await resProd.json();
-            if (Array.isArray(dataProd) && dataProd.length > 0) {
-              this.produtos = dataProd;
-            } else {
-              // Produto padrão caso o banco esteja vazio
-              this.produtos = [{
-                id: '1',
-                nome: 'Conjunto Tati Moletinho Premium',
-                preco: 189.90,
-                descricao: 'Conjunto de moletinho super macio e elegante.',
-                tamanhos: ['P', 'M', 'G', 'GG'],
-                cores: ['Rosa', 'Preto', 'Nude'],
-                imagens: ['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600'],
-                faqs: []
-              }];
-            }
-          } catch(err) {
-            console.error('Erro ao carregar produtos da nuvem:', err);
+          const met = localStorage.getItem('dridalia_metricas_cliques');
+          if (met) {
+            try { this.metricasCliques = JSON.parse(met); } catch(e) {}
+          }
+
+          const pgs = localStorage.getItem('dridalia_paginas_admin');
+          if (pgs) {
+            try { this.paginasAdmin = JSON.parse(pgs); } catch(e) {}
           }
         },
 
-        async salvarConfiguracoes() {
-          try {
-            await fetch(this.workerUrl + '/api/config', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(this.config)
-            });
-            alert('Configurações salvas com sucesso na nuvem!');
-          } catch(err) {
-            alert('Erro ao salvar na nuvem: ' + err.message);
+        abrirPaginaInstitucional(tipo) {
+          this.menuLateralAberto = false;
+          if (tipo === 'privacidade') {
+            this.paginaAtual = { titulo: 'Política de Privacidade', imagem: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600', descricao: 'A sua privacidade é importante para nós. É política da Dridalia respeitar a sua privacidade.' };
+          } else if (tipo === 'entrega') {
+            this.paginaAtual = { titulo: 'Política de Frete e Entrega', imagem: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=600', descricao: 'Enviamos para todo o Brasil com rapidez e segurança.' };
+          } else if (tipo === 'devolucao') {
+            this.paginaAtual = { titulo: 'Política de Trocas e Devoluções', imagem: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=600', descricao: 'Garantimos a sua satisfação! Até 7 dias corridos para devolução.' };
           }
+          this.modalPaginaAberto = true;
         },
 
-        async adicionarProduto() {
-          if (!this.novoProd.nome || !this.novoProd.preco || !this.novoProd.img1) {
-            alert('Preencha nome, preço e imagem.');
+        abrirPaginaDinamica(pag) {
+          this.menuLateralAberto = false;
+          this.paginaAtual = pag;
+          this.modalPaginaAberto = true;
+        },
+
+        adicionarPaginaAdmin() {
+          if (!this.novaPagina.titulo || !this.novaPagina.descricao) {
+            alert('Preencha título e descrição.');
             return;
           }
-          const novoObj = {
-            id: 'prod_' + Date.now(),
-            nome: this.novoProd.nome,
-            preco: parseFloat(this.novoProd.preco),
-            descricao: this.novoProd.descricao,
-            tamanhos: ['P', 'M', 'G', 'GG'],
-            cores: ['Rosa', 'Preto', 'Nude'],
-            imagens: [this.novoProd.img1, this.novoProd.img2, this.novoProd.img3, this.novoProd.img4, this.novoProd.img5].filter(Boolean),
-            faqs: []
-          };
+          this.paginasAdmin.push({ id: Date.now(), ...this.novaPagina });
+          localStorage.setItem('dridalia_paginas_admin', JSON.stringify(this.paginasAdmin));
+          this.novaPagina = { titulo: '', imagem: '', descricao: '', link: '' };
+          alert('Página criada!');
+        },
 
-          try {
-            await fetch(this.workerUrl + '/api/produtos', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(novoObj)
-            });
-            this.produtos.push(novoObj);
-            this.novoProd = { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' };
-            alert('Produto cadastrado com sucesso na nuvem!');
-          } catch(err) {
-            alert('Erro ao cadastrar produto: ' + err.message);
+        excluirPaginaAdmin(index) {
+          if (confirm('Excluir página?')) {
+            this.paginasAdmin.splice(index, 1);
+            localStorage.setItem('dridalia_paginas_admin', JSON.stringify(this.paginasAdmin));
           }
         },
 
-        async excluirProduto(id) {
-          if (confirm('Deseja excluir este produto da nuvem?')) {
-            try {
-              await fetch(this.workerUrl + '/api/produtos/' + id, { method: 'DELETE' });
-              this.produtos = this.produtos.filter(p => p.id !== id);
-              alert('Produto excluído com sucesso!');
-            } catch(err) {
-              alert('Erro ao excluir: ' + err.message);
-            }
+        get faqsParaExibir() {
+          if (this.produtoChat && this.produtoChat.faqs && this.produtoChat.faqs.length > 0) return this.produtoChat.faqs;
+          return this.faqsPadrao;
+        },
+
+        limparMetricas() {
+          if (confirm('Limpar histórico?')) {
+            this.metricasCliques = [];
+            localStorage.removeItem('dridalia_metricas_cliques');
           }
+        },
+
+        abrirFaqProduto(prod) {
+          this.prodEditandoFaq = prod;
+          if (!this.prodEditandoFaq.faqs) this.prodEditandoFaq.faqs = [];
+          this.modalFaqProdutoAberto = true;
+        },
+
+        adicionarFaqAoProduto() {
+          if (!this.novaFaqProd.pergunta || !this.novaFaqProd.resposta) return;
+          this.prodEditandoFaq.faqs.push({ ...this.novaFaqProd });
+          this.salvarProdutosStorage();
+          this.novaFaqProd = { pergunta: '', resposta: '' };
+        },
+
+        removerFaqDoProduto(index) {
+          this.prodEditandoFaq.faqs.splice(index, 1);
+          this.salvarProdutosStorage();
+        },
+
+        abrirEditarProduto(prod) {
+          this.prodEmEdicao = {
+            id: prod.id,
+            nome: prod.nome,
+            preco: prod.preco,
+            descricao: prod.descricao,
+            tamanhos: prod.tamanhos || ['P', 'M', 'G', 'GG'],
+            cores: prod.cores || ['Rosa', 'Preto', 'Nude'],
+            img1: prod.imagens && prod.imagens[0] ? prod.imagens[0] : '',
+            img2: prod.imagens && prod.imagens[1] ? prod.imagens[1] : '',
+            img3: prod.imagens && prod.imagens[2] ? prod.imagens[2] : '',
+            img4: prod.imagens && prod.imagens[3] ? prod.imagens[3] : '',
+            img5: prod.imagens && prod.imagens[4] ? prod.imagens[4] : '',
+            faqs: prod.faqs || []
+          };
+          this.modalEditProdutoAberto = true;
+        },
+
+        salvarEdicaoProduto() {
+          const idx = this.produtos.findIndex(p => p.id === this.prodEmEdicao.id);
+          if (idx > -1) {
+            const imgs = [this.prodEmEdicao.img1, this.prodEmEdicao.img2, this.prodEmEdicao.img3, this.prodEmEdicao.img4, this.prodEmEdicao.img5].filter(Boolean);
+            this.produtos[idx] = {
+              id: this.prodEmEdicao.id,
+              nome: this.prodEmEdicao.nome,
+              preco: this.prodEmEdicao.preco,
+              descricao: this.prodEmEdicao.descricao,
+              tamanhos: this.prodEmEdicao.tamanhos,
+              cores: this.prodEmEdicao.cores,
+              imagens: imgs,
+              faqs: this.prodEmEdicao.faqs
+            };
+            this.salvarProdutosStorage();
+            this.modalEditProdutoAberto = false;
+            alert('Atualizado!');
+          }
+        },
+
+        excluirProduto(id) {
+          if (confirm('Excluir produto?')) {
+            this.produtos = this.produtos.filter(p => p.id !== id);
+            this.salvarProdutosStorage();
+          }
+        },
+
+        salvarProdutosStorage() {
+          localStorage.setItem('dridalia_produtos', JSON.stringify(this.produtos));
         },
 
         buscarCep() {
@@ -730,6 +841,19 @@
           this.produtoChat = prod;
           this.chatMensagens = [{ tipo: 'bot', texto: `Olá! Como posso ajudar com "${prod.nome}"?` }];
           this.chatbotAberto = true;
+        },
+
+        selecionarFaq(faq) {
+          this.chatMensagens.push({ tipo: 'usuario', texto: faq.pergunta });
+          setTimeout(() => { this.chatMensagens.push({ tipo: 'bot', texto: faq.resposta }); }, 300);
+        },
+
+        enviarMensagemLivre() {
+          if (!this.mensagemChat.trim()) return;
+          const txt = this.mensagemChat;
+          this.chatMensagens.push({ tipo: 'usuario', texto: txt });
+          this.mensagemChat = '';
+          setTimeout(() => { this.chatMensagens.push({ tipo: 'bot', texto: 'Nossa equipe responderá em breve.' }); }, 500);
         },
 
         clicarMinhaConta() { this.painelAberto = true; if (!this.usuario.logado) this.modoConta = 'login'; },
@@ -780,6 +904,32 @@
         copiarTexto(txt) {
           navigator.clipboard.writeText(txt);
           alert('Link copiado!');
+        },
+
+        adicionarProduto() {
+          if (!this.novoProd.nome || !this.novoProd.preco || !this.novoProd.img1) {
+            alert('Preencha nome, preço e imagem.');
+            return;
+          }
+          const imgs = [this.novoProd.img1, this.novoProd.img2, this.novoProd.img3, this.novoProd.img4, this.novoProd.img5].filter(Boolean);
+          this.produtos.push({
+            id: Date.now(),
+            nome: this.novoProd.nome,
+            preco: this.novoProd.preco,
+            descricao: this.novoProd.descricao,
+            tamanhos: ['P', 'M', 'G', 'GG'],
+            cores: ['Rosa', 'Preto', 'Nude'],
+            imagens: imgs,
+            faqs: []
+          });
+          this.salvarProdutosStorage();
+          this.novoProd = { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' };
+          alert('Produto cadastrado!');
+        },
+
+        salvarConfiguracoes() {
+          localStorage.setItem('dridalia_config', JSON.stringify(this.config));
+          alert('Configurações salvas!');
         },
 
         falarTexto(txt) {
