@@ -189,6 +189,13 @@ const app = {
 
       if (p.startsWith('/api/product/') && m === 'DELETE') { await DB.prepare('DELETE FROM produtos WHERE id=?').bind(p.split('/').pop()).run(); return J({ ok: 1 }); }
 
+      if (p === '/api/faqs' && m === 'POST') { // perguntas e respostas do chatbot de cada produto
+        const b = await body();
+        const faqs = (Array.isArray(b.faqs) ? b.faqs : []).slice(0, 50).map(f => ({ pergunta: String(f.pergunta || '').trim().slice(0, 200), resposta: String(f.resposta || '').trim().slice(0, 1000) })).filter(f => f.pergunta && f.resposta);
+        await DB.prepare('UPDATE produtos SET faqs=? WHERE id=?').bind(JSON.stringify(faqs), b.id).run();
+        return J({ ok: 1 });
+      }
+
       if (p === '/api/page' && m === 'POST') {
         const b = await body();
         await DB.prepare('INSERT INTO paginas(titulo,imagem,descricao,link) VALUES(?,?,?,?)').bind(b.titulo, b.imagem || '', b.descricao, b.link || '').run();
