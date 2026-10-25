@@ -9,20 +9,21 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-<style>.grife{font-family:'Playfair Display',Georgia,serif}.ap{aspect-ratio:3/4}[x-cloak]{display:none!important}</style>
+<style>.grife{font-family:'Playfair Display',Georgia,serif}.ap{aspect-ratio:3/4}.sc::-webkit-scrollbar{display:none}[x-cloak]{display:none!important}</style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased" x-data="loja()" x-init="init()">
 
 <!-- POPUP -->
-<div x-show="cfg.popupAtivo && popup" x-cloak class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+<div x-show="cfg.popupAtivo && popup && (promo()||cfg.popupTitulo)" x-cloak class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
   <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden relative">
     <button @click="popup=false" class="absolute top-3 right-3 bg-gray-900/70 text-white w-8 h-8 rounded-full z-10"><i class="fa-solid fa-xmark"></i></button>
-    <img x-show="cfg.popupImagem" :src="cfg.popupImagem" class="w-full h-56 object-cover">
+    <img x-show="promo()||cfg.popupImagem" :src="promo()?(promo().imagens||[])[0]:cfg.popupImagem" class="w-full h-56 object-cover">
     <div class="p-6 text-center space-y-3">
       <span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-3 py-1 rounded-full uppercase" x-text="cfg.popupTag||'Oferta Especial'"></span>
-      <h3 class="text-xl font-bold" x-text="cfg.popupTitulo"></h3>
-      <p class="text-xs text-gray-600" x-text="cfg.popupTexto"></p>
-      <button @click="popup=false" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl text-xs">Aproveitar Agora</button>
+      <h3 class="text-xl font-bold" x-text="promo()?promo().nome:cfg.popupTitulo"></h3>
+      <p class="text-lg font-extrabold text-rose-600" x-show="promo()" x-text="promo()&&brl(promo().preco)"></p>
+      <p class="text-xs text-gray-600" x-text="promo()?promo().descricao:cfg.popupTexto"></p>
+      <button @click="promo()?(add(promo(),(promo().cores||[])[0],(promo().tamanhos||[])[0]),popup=false):(popup=false)" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl text-xs" x-text="promo()?'Comprar agora':'Aproveitar Agora'"></button>
     </div>
   </div>
 </div>
@@ -36,7 +37,7 @@
       <h1 class="text-lg font-bold grife" x-text="cfg.nomeLoja"></h1>
     </div>
     <div class="flex items-center space-x-2">
-      <button @click="conta=true" class="text-xs font-semibold bg-gray-100 px-3 py-2 rounded-full">
+      <button @click="conta=true;if(user)carregarAf()" class="text-xs font-semibold bg-gray-100 px-3 py-2 rounded-full">
         <i class="fa-solid fa-user-circle text-rose-600 mr-1"></i><span x-text="user?user.nome.split(' ')[0]:'Entrar'"></span>
       </button>
       <button @click="carrinho=true" aria-label="Carrinho" class="relative p-2.5 bg-rose-50 text-rose-600 rounded-full">
@@ -83,15 +84,14 @@
     <template x-for="p in produtos" :key="p.id">
       <article class="bg-white rounded-2xl shadow-sm border overflow-hidden flex flex-col" x-data="{i:0,cor:(p.cores||[])[0]||'',tam:(p.tamanhos||[])[0]||''}">
         <div class="relative ap bg-gray-100">
-          <img :src="(p.imagens||[])[i]" :alt="p.nome" class="w-full h-full object-cover" loading="lazy">
-          <button @click="falar(p.nome+'. '+(p.descricao||''))" class="absolute top-3 right-3 bg-rose-600 text-white w-9 h-9 rounded-full" aria-label="Ouvir"><i class="fa-solid fa-volume-high text-xs"></i></button>
-          <button x-show="user" @click="linkProd(p)" class="absolute top-3 left-3 bg-gray-900 text-white w-9 h-9 rounded-full" aria-label="Link afiliado"><i class="fa-solid fa-share-nodes text-xs"></i></button>
-          <template x-if="(p.imagens||[]).length>1">
-            <div>
-              <button @click="i=i===0?p.imagens.length-1:i-1" class="absolute left-2 top-1/2 bg-black/50 text-white w-7 h-7 rounded-full"><i class="fa-solid fa-chevron-left text-xs"></i></button>
-              <button @click="i=i===p.imagens.length-1?0:i+1" class="absolute right-2 top-1/2 bg-black/50 text-white w-7 h-7 rounded-full"><i class="fa-solid fa-chevron-right text-xs"></i></button>
-            </div>
-          </template>
+          <div class="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory sc" style="scrollbar-width:none" @scroll="i=Math.round($el.scrollLeft/$el.clientWidth)">
+            <template x-for="(im,n) in (p.imagens||[])" :key="n"><img :src="im" :alt="p.nome" class="w-full h-full object-cover flex-none snap-center" loading="lazy"></template>
+          </div>
+          <button @click="falar(p.nome+'. '+(p.descricao||''))" class="absolute top-3 right-3 bg-rose-600 text-white px-3 h-10 rounded-full shadow-lg ring-2 ring-white flex items-center gap-1 text-[11px] font-bold z-10" aria-label="Ouvir descrição"><i class="fa-solid fa-volume-high"></i>Ouvir</button>
+          <button x-show="user" @click="linkProd(p)" class="absolute top-3 left-3 bg-gray-900 text-white w-10 h-10 rounded-full z-10" aria-label="Link afiliado"><i class="fa-solid fa-share-nodes text-xs"></i></button>
+          <div x-show="(p.imagens||[]).length>1" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            <template x-for="(im,n) in (p.imagens||[])" :key="n"><span :class="i===n?'bg-rose-600 w-4':'bg-white/80 w-1.5'" class="h-1.5 rounded-full transition-all"></span></template>
+          </div>
         </div>
         <div class="p-4 space-y-3 flex-1 flex flex-col justify-between">
           <h2 class="font-bold" x-text="p.nome"></h2>
@@ -108,6 +108,7 @@
         </div>
         <div x-show="user&&user.admin" class="bg-gray-900 p-2 flex gap-1 text-[10px] text-white">
           <button @click="editar(p)" class="bg-blue-600 px-2 py-1 rounded font-bold">Editar</button>
+          <button @click="promover(p)" class="bg-amber-500 px-2 py-1 rounded font-bold"><i class="fa-solid fa-bullhorn mr-1"></i>Promoção</button>
           <button @click="excluir(p.id)" class="bg-red-600 px-2 py-1 rounded font-bold">Excluir</button>
         </div>
       </article>
@@ -173,11 +174,11 @@
       <button @click="conta=false"><i class="fa-solid fa-xmark text-2xl"></i></button>
     </div>
     <div x-show="user" class="flex border-b bg-gray-50 text-xs overflow-x-auto">
-      <button @click="aba='afiliado'" :class="aba==='afiliado'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Afiliado</button>
+      <button @click="aba='afiliado'" :class="aba==='afiliado'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Afiliado (ganhos)</button>
       <template x-if="user&&user.admin"><div class="flex">
         <button @click="aba='produtos'" :class="aba==='produtos'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Produto</button>
         <button @click="aba='paginas'" :class="aba==='paginas'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Páginas</button>
-        <button @click="aba='loja'" :class="aba==='loja'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Loja</button>
+        <button @click="aba='loja';carregarAj()" :class="aba==='loja'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Loja</button>
       </div></template>
       <button @click="sair()" class="px-5 py-3 text-red-500 font-semibold ml-auto">Sair</button>
     </div>
@@ -195,6 +196,7 @@
       <!-- afiliado -->
       <div x-show="user&&aba==='afiliado'" class="space-y-3">
         <div class="bg-purple-50 border p-4 rounded-2xl"><span class="text-[10px] font-bold text-purple-800 uppercase">Seu código</span><p class="text-lg font-mono font-bold text-purple-600" x-text="user&&user.codigo"></p></div>
+        <div class="grid grid-cols-3 gap-2 text-center"><div class="bg-blue-50 border p-3 rounded-2xl"><span class="text-[10px] font-bold text-blue-800 uppercase">Cliques</span><p class="text-lg font-bold text-blue-600" x-text="af.cliques"></p></div><div class="bg-amber-50 border p-3 rounded-2xl"><span class="text-[10px] font-bold text-amber-800 uppercase">Vendas</span><p class="text-lg font-bold text-amber-600" x-text="af.vendas"></p></div><div class="bg-emerald-50 border p-3 rounded-2xl"><span class="text-[10px] font-bold text-emerald-800 uppercase">Ganhos</span><p class="text-lg font-bold text-emerald-600" x-text="brl(af.comissao)"></p></div></div>
         <div class="flex gap-2"><input readonly :value="user?location.origin+'?ref='+user.codigo:''" class="w-full p-2.5 border rounded-xl font-mono"><button @click="copiar(location.origin+'?ref='+user.codigo)" class="px-4 bg-gray-900 text-white font-bold rounded-xl">Copiar</button></div>
       </div>
       <!-- produtos (admin) -->
@@ -203,10 +205,8 @@
         <div class="grid grid-cols-2 gap-2"><input x-model="pf.nome" placeholder="Nome" class="p-2 border rounded-xl"><input x-model.number="pf.preco" type="number" step="0.01" placeholder="Preço" class="p-2 border rounded-xl"></div>
         <div class="grid grid-cols-2 gap-2"><input x-model="pf.tamanhos" placeholder="Tamanhos: P,M,G" class="p-2 border rounded-xl"><input x-model="pf.cores" placeholder="Cores: Rosa,Preto" class="p-2 border rounded-xl"></div>
         <textarea x-model="pf.descricao" placeholder="Descrição" class="w-full p-2 border rounded-xl h-16"></textarea>
-        <div class="flex flex-wrap gap-2">
-          <template x-for="(im,n) in pf.imagens" :key="im"><div class="relative"><img :src="im" class="w-16 h-20 object-cover rounded-lg"><button @click="pf.imagens.splice(n,1)" class="absolute -top-1 -right-1 bg-red-600 text-white w-5 h-5 rounded-full text-[10px]">×</button></div></template>
-        </div>
-        <label class="block"><span class="text-gray-600">Fotos (envia para o R2, até 5)</span><input type="file" accept="image/*" multiple @change="subir($event)" class="block w-full mt-1"></label>
+        <template x-for="n in [0,1,2,3,4]" :key="n"><input x-model="pf.imagens[n]" :placeholder="'URL da imagem '+(n+1)+(n===0?' (principal)':' (opcional)')" class="w-full p-2 border rounded-xl"></template>
+        <label class="block"><span class="text-gray-600">ou envie foto do celular (vai para o R2)</span><input type="file" accept="image/*" multiple @change="subir($event)" class="block w-full mt-1"></label>
         <div class="flex gap-2"><button @click="salvarProd()" class="flex-1 py-2.5 bg-gray-900 text-white font-bold rounded-xl">Salvar produto</button><button x-show="pf.id" @click="zerarPf()" class="px-4 bg-gray-200 rounded-xl">Cancelar</button></div>
       </div>
       <!-- páginas (admin) -->
@@ -227,8 +227,21 @@
         <div class="grid grid-cols-2 gap-2"><input x-model="cfg.popupTag" placeholder="Tag" class="p-2 border rounded-xl"><input x-model="cfg.popupTitulo" placeholder="Título" class="p-2 border rounded-xl"></div>
         <input x-model="cfg.popupImagem" placeholder="URL imagem pop-up" class="w-full p-2 border rounded-xl">
         <textarea x-model="cfg.popupTexto" placeholder="Texto" class="w-full p-2 border rounded-xl h-16"></textarea>
-        <p class="text-gray-500">Mercado Pago e frete ficam nos Secrets do Worker, nunca aqui.</p>
+        
         <button @click="salvarCfg()" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl">Salvar loja</button>
+        <div class="border-t pt-3 mt-3 space-y-2">
+          <b>Mercado Pago</b>
+          <input x-model="aj.mpPublicKey" placeholder="Public Key" class="w-full p-2 border rounded-xl">
+          <input x-model="aj.mpToken" type="password" :placeholder="aj.mpTokenOk?'Access Token (já salvo — deixe vazio para manter)':'Access Token'" class="w-full p-2 border rounded-xl">
+          <b>Frete</b>
+          <select x-model="aj.freteEmpresa" class="w-full p-2 border rounded-xl bg-white"><option value="superfrete">Super Frete</option><option value="melhorenvio">Melhor Envio</option><option value="frenet">Frenet</option><option value="correios">Correios</option></select>
+          <input x-model="aj.freteToken" type="password" :placeholder="aj.freteTokenOk?'Token do frete (já salvo — deixe vazio para manter)':'Token da API de frete'" class="w-full p-2 border rounded-xl">
+          <b>Endereço da loja (origem do frete)</b>
+          <div class="grid grid-cols-3 gap-2"><input x-model="aj.enderecoLoja.cep" placeholder="CEP" class="p-2 border rounded-xl"><input x-model="aj.enderecoLoja.rua" placeholder="Rua" class="p-2 border rounded-xl col-span-2"></div>
+          <div class="grid grid-cols-3 gap-2"><input x-model="aj.enderecoLoja.numero" placeholder="Nº" class="p-2 border rounded-xl"><input x-model="aj.enderecoLoja.bairro" placeholder="Bairro" class="p-2 border rounded-xl col-span-2"></div>
+          <div class="grid grid-cols-3 gap-2"><input x-model="aj.enderecoLoja.cidade" placeholder="Cidade" class="p-2 border rounded-xl col-span-2"><input x-model="aj.enderecoLoja.uf" maxlength="2" placeholder="UF" class="p-2 border rounded-xl uppercase"></div>
+          <button @click="salvarAj()" class="w-full py-3 bg-gray-900 text-white font-bold rounded-xl">Salvar pagamento e frete</button>
+        </div>
       </div>
     </div>
   </div>
@@ -239,13 +252,15 @@
 <script>
 const API='https://dridalia-api.bmlimp8.workers.dev/api/';
 function loja(){return{
-  cfg:{nomeLoja:'Dridalia Moda Feminina',logo:'',banner:'',popupAtivo:false,popupTag:'',popupTitulo:'',popupTexto:'',popupImagem:''},
+  cfg:{nomeLoja:'Dridalia Moda Feminina',logo:'',banner:'',popupAtivo:false,popupTag:'',popupTitulo:'',popupTexto:'',popupImagem:'',popupProdutoId:null},
   produtos:[],paginas:[],user:null,carregando:true,
   menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,
   f:{nome:'',email:'',senha:''},itens:[],frete:15,
   end:{nome:'',email:'',cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''},
-  pf:{id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:[]},
+  pf:{id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:['','','','','']},
   nf:{titulo:'',imagem:'',descricao:'',link:''},
+  af:{cliques:0,vendas:0,comissao:0},
+  aj:{mpPublicKey:'',mpToken:'',mpTokenOk:false,freteEmpresa:'superfrete',freteToken:'',freteTokenOk:false,enderecoLoja:{cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''}},
   politicas:[
     {titulo:'Política de Privacidade',descricao:'Respeitamos a sua privacidade e usamos seus dados apenas para processar pedidos e atendimento.'},
     {titulo:'Frete e Entrega',descricao:'Enviamos para todo o Brasil via Super Frete e Correios, em até 24h úteis após a confirmação do pagamento.'},
@@ -287,19 +302,25 @@ function loja(){return{
     try{const d=await this.api('checkout','POST',{itens:this.itens.map(i=>({id:i.id,qtd:i.qtd,cor:i.cor,tam:i.tam})),endereco:e,ref:localStorage.getItem('dri_ref')});
       location.href=d.url}catch(x){alert(x.message);this.pagando=false}},
   // admin
-  zerarPf(){this.pf={id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:[]}},
-  editar(p){this.pf={...p,tamanhos:(p.tamanhos||[]).join(','),cores:(p.cores||[]).join(','),imagens:[...(p.imagens||[])]};this.aba='produtos';this.conta=true},
-  async subir(ev){for(const f of ev.target.files){if(this.pf.imagens.length>=5)break;
-    try{const d=await this.api('upload','POST',f);this.pf.imagens.push(d.url)}catch(e){alert(e.message)}}ev.target.value=''},
+  zerarPf(){this.pf={id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:['','','','','']}},
+  editar(p){this.pf={...p,tamanhos:(p.tamanhos||[]).join(','),cores:(p.cores||[]).join(','),imagens:[...(p.imagens||[]),'','','','',''].slice(0,5)};this.aba='produtos';this.conta=true},
+  async subir(ev){for(const f of ev.target.files){if(this.pf.imagens.findIndex(x=>!x)<0)break;
+    try{const d=await this.api('upload','POST',f);{const i=this.pf.imagens.findIndex(x=>!x);this.pf.imagens[i]=d.url}}catch(e){alert(e.message)}}ev.target.value=''},
   async salvarProd(){const l=s=>s.split(',').map(x=>x.trim()).filter(Boolean);
-    if(!this.pf.nome||!this.pf.preco||!this.pf.imagens.length)return alert('Informe nome, preço e ao menos 1 foto.');
-    try{await this.api('product','POST',{...this.pf,tamanhos:l(this.pf.tamanhos),cores:l(this.pf.cores)});await this.recarregar();this.zerarPf();alert('Produto salvo!')}catch(e){alert(e.message)}},
+    if(!this.pf.nome||!this.pf.preco||!this.pf.imagens.some(x=>x&&x.trim()))return alert('Informe nome, preço e ao menos 1 foto.');
+    try{await this.api('product','POST',{...this.pf,imagens:this.pf.imagens.map(x=>(x||'').trim()).filter(Boolean),tamanhos:l(this.pf.tamanhos),cores:l(this.pf.cores)});await this.recarregar();this.zerarPf();alert('Produto salvo!')}catch(e){alert(e.message)}},
   async excluir(id){if(!confirm('Excluir produto?'))return;try{await this.api('product/'+id,'DELETE');await this.recarregar()}catch(e){alert(e.message)}},
   async salvarPag(){if(!this.nf.titulo||!this.nf.descricao)return alert('Informe título e conteúdo.');
     try{await this.api('page','POST',this.nf);this.nf={titulo:'',imagem:'',descricao:'',link:''};await this.recarregar()}catch(e){alert(e.message)}},
   async excluirPag(id){try{await this.api('page/'+id,'DELETE');await this.recarregar()}catch(e){alert(e.message)}},
   async salvarCfg(){try{await this.api('config','POST',this.cfg);alert('Loja salva!')}catch(e){alert(e.message)}},
   async recarregar(){const d=await this.api('store');this.produtos=d.produtos;this.paginas=d.paginas},
+  promo(){return this.produtos.find(x=>x.id==this.cfg.popupProdutoId)},
+  async promover(p){if(!confirm('Mostrar "'+p.nome+'" no pop-up de promoção?'))return;
+    try{await this.api('config','POST',{popupProdutoId:p.id,popupAtivo:true});this.cfg.popupProdutoId=p.id;this.cfg.popupAtivo=true;this.popup=true}catch(e){alert(e.message)}},
+  async carregarAf(){try{this.af=await this.api('afiliado')}catch(e){}},
+  async carregarAj(){try{const d=await this.api('ajustes');this.aj={...this.aj,...d,enderecoLoja:{...this.aj.enderecoLoja,...(d.enderecoLoja||{})},mpToken:'',freteToken:''}}catch(e){}},
+  async salvarAj(){const a=this.aj;try{await this.api('ajustes','POST',{mpPublicKey:a.mpPublicKey,mpToken:a.mpToken,freteEmpresa:a.freteEmpresa,freteToken:a.freteToken,enderecoLoja:a.enderecoLoja});alert('Salvo!');await this.carregarAj()}catch(e){alert(e.message)}},
   abrirPag(p){this.menu=false;this.pag=p},
   linkProd(p){this.copiar(location.origin+'?prod='+p.id+'&ref='+this.user.codigo)},
   copiar(t){navigator.clipboard.writeText(t);alert('Link copiado!')},
