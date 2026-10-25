@@ -5,7 +5,7 @@ compatibility_date = "2025-10-01"
 [[d1_databases]]
 binding = "LOJA_DB"
 database_name = "dridalia-db"
-database_id ="93e33915-02ef-400c-affb-51c709b1d08a""
+database_id ="93e33915-02ef-400c-affb-51c709b1d08a"
 
 [[r2_buckets]]
 binding = "LOJA_R2"
