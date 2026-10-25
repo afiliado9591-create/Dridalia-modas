@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-<style>.grife{font-family:'Playfair Display',Georgia,serif}.ap{aspect-ratio:3/4}.sc::-webkit-scrollbar{display:none}[x-cloak]{display:none!important}</style>
+<style>.grife{font-family:'Playfair Display',Georgia,serif}.ap{aspect-ratio:3/4}.sc::-webkit-scrollbar{display:none}@keyframes pisca{0%,100%{background:#e11d48}50%{background:#111827}}.pisca{animation:pisca .8s infinite}[x-cloak]{display:none!important}</style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased" x-data="loja()" x-init="init()">
 
@@ -87,8 +87,8 @@
           <div class="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory sc" style="scrollbar-width:none" @scroll="i=Math.round($el.scrollLeft/$el.clientWidth)">
             <template x-for="(im,n) in (p.imagens||[])" :key="n"><img :src="im" :alt="p.nome" class="w-full h-full object-cover flex-none snap-center" loading="lazy"></template>
           </div>
-          <button @click="falar(p.nome+'. '+(p.descricao||''))" class="absolute top-3 right-3 bg-rose-600 text-white px-3 h-10 rounded-full shadow-lg ring-2 ring-white flex items-center gap-1 text-[11px] font-bold z-10" aria-label="Ouvir descrição"><i class="fa-solid fa-volume-high"></i>Ouvir</button>
-          <button x-show="user" @click="linkProd(p)" class="absolute top-3 left-3 bg-gray-900 text-white w-10 h-10 rounded-full z-10" aria-label="Link afiliado"><i class="fa-solid fa-share-nodes text-xs"></i></button>
+          <button @click="falar(p)" :class="falando===p.id?'pisca':'bg-rose-600'" class="absolute top-3 right-3 text-white px-3 h-10 rounded-full shadow-lg ring-2 ring-white flex items-center gap-1 text-[11px] font-bold z-10" :aria-label="falando===p.id?'Parar áudio':'Ouvir descrição'"><i :class="falando===p.id?'fa-solid fa-stop':'fa-solid fa-volume-high'"></i><span x-text="falando===p.id?'Parar':'Ouvir'"></span></button>
+          <button @click="compartilhar(p)" class="absolute top-3 left-3 bg-gray-900 text-white w-10 h-10 rounded-full z-10 shadow-lg ring-2 ring-white" aria-label="Compartilhar"><i class="fa-solid fa-share-nodes text-sm"></i></button>
           <div x-show="(p.imagens||[]).length>1" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
             <template x-for="(im,n) in (p.imagens||[])" :key="n"><span :class="i===n?'bg-rose-600 w-4':'bg-white/80 w-1.5'" class="h-1.5 rounded-full transition-all"></span></template>
           </div>
@@ -200,6 +200,7 @@
       <div x-show="user&&aba==='afiliado'" class="space-y-3">
         <div class="bg-purple-50 border p-4 rounded-2xl"><span class="text-[10px] font-bold text-purple-800 uppercase">Seu código</span><p class="text-lg font-mono font-bold text-purple-600" x-text="user&&user.codigo"></p></div>
         <div class="grid grid-cols-3 gap-2 text-center"><div class="bg-blue-50 border p-3 rounded-2xl"><span class="text-[10px] font-bold text-blue-800 uppercase">Cliques</span><p class="text-lg font-bold text-blue-600" x-text="af.cliques"></p></div><div class="bg-amber-50 border p-3 rounded-2xl"><span class="text-[10px] font-bold text-amber-800 uppercase">Vendas</span><p class="text-lg font-bold text-amber-600" x-text="af.vendas"></p></div><div class="bg-emerald-50 border p-3 rounded-2xl"><span class="text-[10px] font-bold text-emerald-800 uppercase">Ganhos</span><p class="text-lg font-bold text-emerald-600" x-text="brl(af.comissao)"></p></div></div>
+        <p class="text-xs text-gray-600">Você ganha <b x-text="af.pct+'%'"></b> sobre cada venda feita pelo seu link. Aer confirmar: <b x-text="brl(af.pendente)"></b></p>
         <div class="flex gap-2"><input readonly :value="user?location.origin+'?ref='+user.codigo:''" class="w-full p-2.5 border rounded-xl font-mono"><button @click="copiar(location.origin+'?ref='+user.codigo)" class="px-4 bg-gray-900 text-white font-bold rounded-xl">Copiar</button></div>
       </div>
       <!-- produtos (admin) -->
@@ -233,6 +234,9 @@
         
         <button @click="salvarCfg()" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl">Salvar loja</button>
         <div class="border-t pt-3 mt-3 space-y-2">
+          <b>Comissão do afiliado (%)</b>
+          <input x-model.number="aj.comissaoPct" type="number" min="0" max="90" step="0.5" placeholder="Ex.: 10" class="w-full p-2 border rounded-xl">
+          <p class="text-gray-500">Vale sobre o valor dos produtos (sem frete) de cada venda feita pelo link de quem compartilhou.</p>
           <b>Mercado Pago</b>
           <input x-model="aj.mpPublicKey" placeholder="Public Key" class="w-full p-2 border rounded-xl">
           <input x-model="aj.mpToken" type="password" :placeholder="aj.mpTokenOk?'Access Token (já salvo — deixe vazio para manter)':'Access Token'" class="w-full p-2 border rounded-xl">
@@ -257,6 +261,23 @@
   </div>
 </div>
 
+<!-- COMPARTILHAR -->
+<div x-show="share" x-cloak class="fixed inset-0 z-50 bg-black/60 flex items-end justify-center" @click.self="share=null">
+  <div class="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-3">
+    <div class="flex justify-between items-center"><b>Compartilhe e ganhe comissão</b><button @click="share=null"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+    <p class="text-xs text-gray-500" x-text="share&&share.nome"></p>
+    <div class="grid grid-cols-3 gap-3 text-center text-[11px] font-semibold">
+      <button @click="redes('whatsapp')" class="p-3 bg-gray-50 rounded-2xl"><i class="fa-brands fa-whatsapp text-3xl text-green-500"></i><br>WhatsApp</button>
+      <button @click="redes('facebook')" class="p-3 bg-gray-50 rounded-2xl"><i class="fa-brands fa-facebook text-3xl text-blue-600"></i><br>Facebook</button>
+      <button @click="redes('instagram')" class="p-3 bg-gray-50 rounded-2xl"><i class="fa-brands fa-instagram text-3xl text-pink-600"></i><br>Instagram</button>
+      <button @click="redes('tiktok')" class="p-3 bg-gray-50 rounded-2xl"><i class="fa-brands fa-tiktok text-3xl text-gray-900"></i><br>TikTok</button>
+      <button @click="redes('telegram')" class="p-3 bg-gray-50 rounded-2xl"><i class="fa-brands fa-telegram text-3xl text-sky-500"></i><br>Telegram</button>
+      <button @click="redes('copiar')" class="p-3 bg-gray-50 rounded-2xl"><i class="fa-solid fa-link text-3xl text-gray-600"></i><br>Copiar link</button>
+    </div>
+    <button x-show="navigator.share" @click="redes('nativo')" class="w-full py-3 bg-gray-900 text-white font-bold rounded-xl text-xs">Mais opções (Messenger, outros apps)</button>
+  </div>
+</div>
+
 <footer class="bg-white border-t py-8 mt-16 text-center text-xs text-gray-500"><b class="text-gray-800" x-text="cfg.nomeLoja+' © '+new Date().getFullYear()"></b></footer>
 
 <script>
@@ -264,13 +285,13 @@ const API='https://dridalia-api.bmlimp8.workers.dev/api/';
 function loja(){return{
   cfg:{nomeLoja:'Dridalia Moda Feminina',logo:'',banner:'',popupAtivo:false,popupTag:'',popupTitulo:'',popupTexto:'',popupImagem:'',popupProdutoId:null},
   produtos:[],paginas:[],user:null,carregando:true,
-  menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,ocupado:false,
+  menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,ocupado:false,share:null,falando:null,
   f:{nome:'',email:'',senha:''},itens:[],frete:0,opcoes:[],freteSel:null,calculando:false,freteErro:'',
   end:{nome:'',email:'',cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''},
   pf:{id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:['','','','','']},
   nf:{titulo:'',imagem:'',descricao:'',link:''},
-  af:{cliques:0,vendas:0,comissao:0},
-  aj:{mpPublicKey:'',mpToken:'',mpTokenOk:false,freteEmpresa:'superfrete',freteToken:'',freteTokenOk:false,pacote:{altura:8,largura:20,comprimento:28,peso:0.6},regras:[],nr:{cidade:'',uf:'',valor:null},enderecoLoja:{cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''}},
+  af:{cliques:0,vendas:0,comissao:0,pendente:0,pct:0},
+  aj:{mpPublicKey:'',mpToken:'',mpTokenOk:false,freteEmpresa:'superfrete',freteToken:'',freteTokenOk:false,comissaoPct:0,pacote:{altura:8,largura:20,comprimento:28,peso:0.6},regras:[],nr:{cidade:'',uf:'',valor:null},enderecoLoja:{cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''}},
   politicas:[
     {titulo:'Política de Privacidade',descricao:'Respeitamos a sua privacidade e usamos seus dados apenas para processar pedidos e atendimento.'},
     {titulo:'Frete e Entrega',descricao:'Enviamos para todo o Brasil via Super Frete e Correios, em até 24h úteis após a confirmação do pagamento.'},
@@ -337,15 +358,28 @@ function loja(){return{
   promo(){return this.produtos.find(x=>x.id==this.cfg.popupProdutoId)},
   async promover(p){if(!confirm('Mostrar "'+p.nome+'" no pop-up de promoção?'))return;
     try{await this.api('config','POST',{popupProdutoId:p.id,popupAtivo:true});this.cfg.popupProdutoId=p.id;this.cfg.popupAtivo=true;this.popup=true}catch(e){alert(e.message)}},
+  compartilhar(p){if(!this.user){this.modo='cadastro';this.conta=true;return alert('Crie sua conta grátis: quem compartilha ganha comissão nas vendas feitas pelo seu link.')}this.share=p},
+  redes(rede){const p=this.share,l=location.origin+'?prod='+p.id+'&ref='+this.user.codigo,u=encodeURIComponent(l),t=encodeURIComponent('Olha esse produto da Dridalia: '+p.nome+' ');
+    const mapa={whatsapp:'https://wa.me/?text='+t+u,facebook:'https://www.facebook.com/sharer/sharer.php?u='+u,telegram:'https://t.me/share/url?url='+u+'&text='+encodeURIComponent(p.nome)};
+    if(mapa[rede]){window.open(mapa[rede],'_blank');return}
+    if(rede==='nativo'&&navigator.share){navigator.share({title:p.nome,text:p.nome,url:l}).catch(()=>{});return}
+    navigator.clipboard.writeText(l).catch(()=>{});
+    if(rede==='instagram'){window.open('https://www.instagram.com/','_blank');alert('Link copiado! Cole no seu story, post ou bio.')}
+    else if(rede==='tiktok'){window.open('https://www.tiktok.com/','_blank');alert('Link copiado! Cole na descrição ou na bio.')}
+    else alert('Link copiado!')},
   addRegra(){const n=this.aj.nr;if(!n.cidade||!n.uf||n.valor===null||n.valor==='')return alert('Informe cidade, UF e valor.');
     this.aj.regras.push({cidade:n.cidade.trim(),uf:n.uf.trim().toUpperCase(),valor:Number(n.valor)});this.aj.nr={cidade:'',uf:'',valor:null}},
   async carregarAf(){try{this.af=await this.api('afiliado')}catch(e){}},
   async carregarAj(){try{const d=await this.api('ajustes');this.aj={...this.aj,...d,enderecoLoja:{...this.aj.enderecoLoja,...(d.enderecoLoja||{})},pacote:{...this.aj.pacote,...(d.pacote||{})},regras:d.regras||[],mpToken:'',freteToken:''}}catch(e){}},
-  async salvarAj(){const a=this.aj;try{await this.api('ajustes','POST',{mpPublicKey:a.mpPublicKey,mpToken:a.mpToken,freteEmpresa:a.freteEmpresa,freteToken:a.freteToken,enderecoLoja:a.enderecoLoja,pacote:a.pacote,regras:a.regras});alert('Salvo!');await this.carregarAj()}catch(e){alert(e.message)}},
+  async salvarAj(){const a=this.aj;try{await this.api('ajustes','POST',{mpPublicKey:a.mpPublicKey,mpToken:a.mpToken,freteEmpresa:a.freteEmpresa,freteToken:a.freteToken,enderecoLoja:a.enderecoLoja,pacote:a.pacote,regras:a.regras,comissaoPct:a.comissaoPct});alert('Salvo!');await this.carregarAj()}catch(e){alert(e.message)}},
   abrirPag(p){this.menu=false;this.pag=p},
   linkProd(p){this.copiar(location.origin+'?prod='+p.id+'&ref='+this.user.codigo)},
   copiar(t){navigator.clipboard.writeText(t);alert('Link copiado!')},
-  falar(t){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const m=new SpeechSynthesisUtterance(t);m.lang='pt-BR';speechSynthesis.speak(m)}
+  falar(p){if(!('speechSynthesis' in window))return alert('Seu navegador não tem voz para ler a descrição.');
+    if(this.falando===p.id){speechSynthesis.cancel();this.falando=null;return}
+    speechSynthesis.cancel();const m=new SpeechSynthesisUtterance(p.nome+'. '+(p.descricao||''));m.lang='pt-BR';
+    m.onend=m.onerror=()=>{if(this.falando===p.id)this.falando=null};
+    this.falando=p.id;speechSynthesis.speak(m)}
 }}
 </script>
 </body>
