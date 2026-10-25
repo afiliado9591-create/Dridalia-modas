@@ -103,11 +103,12 @@
           </div>
           <div>
             <span class="text-xl font-extrabold" x-text="brl(p.preco)"></span>
-            <button @click="add(p,cor,tam)" class="w-full mt-2 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl"><i class="fa-solid fa-cart-plus mr-1"></i>Comprar</button>
+            <div class="grid gap-2 mt-2" :class="(p.faqs||[]).length?'grid-cols-2':'grid-cols-1'"><button x-show="(p.faqs||[]).length" @click="abrirChat(p)" class="py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-xl"><i class="fa-solid fa-comments mr-1"></i>Dúvidas</button><button @click="add(p,cor,tam)" class="py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl"><i class="fa-solid fa-cart-plus mr-1"></i>Comprar</button></div>
           </div>
         </div>
-        <div x-show="user&&user.admin" class="bg-gray-900 p-2 flex gap-1 text-[10px] text-white">
+        <div x-show="user&&user.admin" class="bg-gray-900 p-2 flex flex-wrap gap-1 text-[10px] text-white">
           <button @click="editar(p)" class="bg-blue-600 px-2 py-1 rounded font-bold">Editar</button>
+          <button @click="abrirFaq(p)" class="bg-emerald-600 px-2 py-1 rounded font-bold"><i class="fa-solid fa-comments mr-1"></i>Chat</button>
           <button @click="promover(p)" class="bg-amber-500 px-2 py-1 rounded font-bold"><i class="fa-solid fa-bullhorn mr-1"></i>Promoção</button>
           <button @click="excluir(p.id)" class="bg-red-600 px-2 py-1 rounded font-bold">Excluir</button>
         </div>
@@ -261,6 +262,50 @@
   </div>
 </div>
 
+<!-- CHAT DO PRODUTO (cliente) -->
+<div x-show="chat.p" x-cloak class="fixed inset-0 z-50 bg-black/60 flex justify-center" @click.self="fecharChat()">
+  <div class="bg-gray-50 w-full max-w-md h-[100dvh] flex flex-col">
+    <div class="p-3 bg-gray-900 text-white flex items-center gap-3">
+      <button @click="fecharChat()" aria-label="Voltar"><i class="fa-solid fa-arrow-left text-lg"></i></button>
+      <b class="text-sm flex-1">Tire suas dúvidas</b>
+      <button @click="alternarVoz()" :class="vozChat?'bg-rose-600':'bg-gray-700'" class="px-3 h-8 rounded-full text-[11px] font-bold flex items-center gap-1"><i :class="vozChat?'fa-solid fa-volume-high':'fa-solid fa-volume-xmark'"></i><span x-text="vozChat?'Voz ligada':'Voz desligada'"></span></button>
+    </div>
+    <!-- cartão do produto -->
+    <div class="bg-white p-3 border-b shadow-sm flex gap-3" x-show="chat.p">
+      <img :src="chat.p&&(chat.p.imagens||[])[0]" class="w-20 h-24 object-cover rounded-xl flex-none">
+      <div class="flex-1 min-w-0 space-y-1.5">
+        <p class="font-bold text-sm truncate" x-text="chat.p&&chat.p.nome"></p>
+        <p class="text-lg font-extrabold text-rose-600" x-text="chat.p&&brl(chat.p.preco)"></p>
+        <div class="flex gap-1.5 text-[11px]">
+          <select x-model="chat.tam" class="border rounded-lg p-1 bg-white"><template x-for="t in (chat.p?(chat.p.tamanhos||[]):[])" :key="t"><option :value="t" x-text="t"></option></template></select>
+          <select x-model="chat.cor" class="border rounded-lg p-1 bg-white"><template x-for="c in (chat.p?(chat.p.cores||[]):[])" :key="c"><option :value="c" x-text="c"></option></template></select>
+        </div>
+        <button @click="add(chat.p,chat.cor,chat.tam);fecharChat()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl"><i class="fa-solid fa-cart-plus mr-1"></i>Compre aqui</button>
+      </div>
+    </div>
+    <!-- mensagens -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-2 text-xs" x-ref="cx">
+      <template x-for="(m,n) in chat.msgs" :key="n"><div :class="m.eu?'text-right':''"><span :class="m.eu?'bg-rose-600 text-white':'bg-white border'" class="inline-block px-3 py-2 rounded-2xl max-w-[85%] text-left whitespace-pre-line" x-text="m.t"></span></div></template>
+      <p x-show="chat.digitando" class="text-gray-400">digitando...</p>
+    </div>
+    <div class="px-3 py-2 flex gap-1.5 overflow-x-auto"><template x-for="(f,n) in (chat.p?(chat.p.faqs||[]):[])" :key="n"><button @click="perguntar(f.pergunta)" class="flex-none text-[11px] px-2.5 py-1.5 bg-rose-50 text-rose-700 rounded-full whitespace-nowrap" x-text="f.pergunta"></button></template></div>
+    <div class="p-3 bg-white border-t flex gap-2"><input x-model="chat.txt" @keyup.enter="perguntar(chat.txt)" placeholder="Digite sua dúvida..." class="flex-1 p-2.5 border rounded-xl text-sm"><button @click="perguntar(chat.txt)" class="px-4 bg-rose-600 text-white rounded-xl" aria-label="Enviar"><i class="fa-solid fa-paper-plane"></i></button></div>
+  </div>
+</div>
+
+<!-- EDITAR CHATBOT (admin) -->
+<div x-show="faqEd" x-cloak class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" @click.self="faqEd=null">
+  <div class="bg-white w-full max-w-lg rounded-3xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div class="p-4 bg-gray-900 text-white flex justify-between"><b class="text-sm">Chatbot: <span x-text="faqEd&&faqEd.nome"></span></b><button @click="faqEd=null"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+    <div class="p-4 overflow-y-auto flex-1 space-y-3 text-xs">
+      <p class="text-gray-500">Crie as perguntas e respostas. O cliente vê as perguntas como botões e também pode digitar a dúvida.</p>
+      <template x-for="(f,n) in (faqEd?faqEd.faqs:[])" :key="n"><div class="border rounded-2xl p-3 space-y-2"><input x-model="f.pergunta" placeholder="Pergunta" class="w-full p-2 border rounded-xl"><textarea x-model="f.resposta" placeholder="Resposta" class="w-full p-2 border rounded-xl h-16"></textarea><button @click="faqEd.faqs.splice(n,1)" class="text-red-500 font-bold"><i class="fa-solid fa-trash-can mr-1"></i>Remover</button></div></template>
+      <button @click="faqEd.faqs.push({pergunta:'',resposta:''})" class="w-full py-2 bg-blue-600 text-white font-bold rounded-xl">+ Adicionar pergunta</button>
+    </div>
+    <div class="p-3 border-t"><button @click="salvarFaq()" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl">Salvar chatbot</button></div>
+  </div>
+</div>
+
 <!-- COMPARTILHAR -->
 <div x-show="share" x-cloak class="fixed inset-0 z-50 bg-black/60 flex items-end justify-center" @click.self="share=null">
   <div class="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-3">
@@ -285,7 +330,7 @@ const API='https://dridalia-api.bmlimp8.workers.dev/api/';
 function loja(){return{
   cfg:{nomeLoja:'Dridalia Moda Feminina',logo:'',banner:'',popupAtivo:false,popupTag:'',popupTitulo:'',popupTexto:'',popupImagem:'',popupProdutoId:null},
   produtos:[],paginas:[],user:null,carregando:true,
-  menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,ocupado:false,share:null,falando:null,
+  menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,ocupado:false,share:null,falando:null,vozChat:false,faqEd:null,chat:{p:null,txt:'',msgs:[]},
   f:{nome:'',email:'',senha:''},itens:[],frete:0,opcoes:[],freteSel:null,calculando:false,freteErro:'',
   end:{nome:'',email:'',cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''},
   pf:{id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:['','','','','']},
@@ -305,7 +350,8 @@ function loja(){return{
     const d=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(d.erro||'Erro '+r.status);return d},
 
-  async init(){
+  async init(){try{this.vozChat=localStorage.getItem('dri_voz')==='1'}catch(e){}
+   
     try{this.itens=JSON.parse(localStorage.getItem('dri_car')||'[]');this.end=JSON.parse(localStorage.getItem('dri_end')||'null')||this.end}catch(e){}
     const q=new URLSearchParams(location.search);if(q.get('ref'))localStorage.setItem('dri_ref',q.get('ref'));
     try{const d=await this.api('store');this.produtos=d.produtos;this.paginas=d.paginas;Object.assign(this.cfg,d.config);}catch(e){console.error(e)}
@@ -358,6 +404,21 @@ function loja(){return{
   promo(){return this.produtos.find(x=>x.id==this.cfg.popupProdutoId)},
   async promover(p){if(!confirm('Mostrar "'+p.nome+'" no pop-up de promoção?'))return;
     try{await this.api('config','POST',{popupProdutoId:p.id,popupAtivo:true});this.cfg.popupProdutoId=p.id;this.cfg.popupAtivo=true;this.popup=true}catch(e){alert(e.message)}},
+  dizer(t){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const m=new SpeechSynthesisUtterance(t);m.lang='pt-BR';speechSynthesis.speak(m)},
+  alternarVoz(){this.vozChat=!this.vozChat;try{localStorage.setItem('dri_voz',this.vozChat?'1':'0')}catch(e){}
+    if(this.vozChat)this.dizer('Voz ativada.');else if('speechSynthesis' in window)speechSynthesis.cancel()},
+  fecharChat(){this.chat.p=null;if('speechSynthesis' in window)speechSynthesis.cancel()},
+  abrirFaq(p){this.faqEd={id:p.id,nome:p.nome,faqs:(p.faqs||[]).map(f=>({pergunta:f.pergunta||'',resposta:f.resposta||''}))}},
+  async salvarFaq(){const e=this.faqEd;try{await this.api('faqs','POST',{id:e.id,faqs:e.faqs});await this.recarregar();this.faqEd=null;alert('Chatbot salvo!')}catch(x){alert(x.message)}},
+  abrirChat(p){this.chat={p,txt:'',digitando:false,tam:(p.tamanhos||[])[0]||'',cor:(p.cores||[])[0]||'',msgs:[{t:'Olá! Escolha uma pergunta abaixo ou digite sua dúvida sobre "'+p.nome+'".'}]}},
+  perguntar(q){q=(q||'').trim();if(!q)return;const faqs=this.chat.p.faqs||[];
+    const nz=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>2);
+    let best=faqs.find(f=>f.pergunta===q),bs=0;
+    if(!best){const qs=nz(q);for(const f of faqs){const wp=new Set(nz(f.pergunta)),wr=new Set(nz(f.resposta));const sc=qs.filter(w=>wp.has(w)).length*2+qs.filter(w=>wr.has(w)).length;if(sc>bs){bs=sc;best=f}}}
+    const rolar=()=>this.$nextTick(()=>{const c=this.$refs.cx;if(c)c.scrollTop=c.scrollHeight});
+    const resp=best?best.resposta:'Ainda não tenho a resposta para isso. Toque em uma das perguntas abaixo.';
+    this.chat.msgs.push({eu:1,t:q});this.chat.txt='';this.chat.digitando=true;rolar();
+    setTimeout(()=>{this.chat.digitando=false;this.chat.msgs.push({t:resp});rolar();if(this.vozChat)this.dizer(resp)},600)},
   compartilhar(p){if(!this.user){this.modo='cadastro';this.conta=true;return alert('Crie sua conta grátis: quem compartilha ganha comissão nas vendas feitas pelo seu link.')}this.share=p},
   redes(rede){const p=this.share,l=location.origin+'?prod='+p.id+'&ref='+this.user.codigo,u=encodeURIComponent(l),t=encodeURIComponent('Olha esse produto da Dridalia: '+p.nome+' ');
     const mapa={whatsapp:'https://wa.me/?text='+t+u,facebook:'https://www.facebook.com/sharer/sharer.php?u='+u,telegram:'https://t.me/share/url?url='+u+'&text='+encodeURIComponent(p.nome)};
