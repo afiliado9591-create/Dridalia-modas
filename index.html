@@ -39,9 +39,9 @@
     </div>
   </div>
 
-  <!-- HEADER DRIDALIA MODA FEMININA (COM LOGO REDONDO E NOME ABAIXO) -->
+  <!-- HEADER DRIDALIA MODA FEMININA -->
   <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
       
       <div class="flex items-center space-x-3">
         <!-- BOTÃO DE MENU DE TRÊS PAUZINHOS (HAMBÚRGUER) -->
@@ -50,14 +50,10 @@
         </button>
 
         <div class="flex items-center space-x-3 cursor-pointer" @click="painelAberto = false">
-          <!-- LOGO REDONDO NA MEDIDA EXATA DO CABEÇALHO -->
-          <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-rose-200 shadow-sm bg-rose-50 flex-shrink-0">
-            <img :src="config.logo || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200'" alt="Logo Dridalia" class="w-full h-full object-cover">
-          </div>
-          <div>
-            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-gray-900 font-grife leading-tight" x-text="config.nomeLoja"></h1>
-            <p class="text-[10px] uppercase tracking-widest text-rose-600 font-semibold" x-text="config.subtituloLoja || 'Moda Feminina'"></p>
-          </div>
+          <template x-if="config.logo">
+            <img :src="config.logo" alt="Dridalia Logo" class="h-10 w-auto object-contain">
+          </template>
+          <h1 class="text-xl font-bold tracking-tight text-gray-900 font-grife" x-text="config.nomeLoja"></h1>
         </div>
       </div>
 
@@ -523,33 +519,14 @@
               </div>
             </div>
 
-            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (COM UPLOAD DE LOGO REDONDO) -->
+            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (COM SUPER FRETE) -->
             <div x-show="abaPainel === 'admin'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
                 <div>
                   <h3 class="font-bold text-gray-900 text-lg">Painel de Controle Administrador</h3>
-                  <p class="text-xs text-gray-500">Gerencie Logo, Identidade, Frete e Pagamentos.</p>
+                  <p class="text-xs text-gray-500">Gerencie Pop-up, Mercado Pago, Frete e Produtos.</p>
                 </div>
                 <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Admin Supremo</span>
-              </div>
-
-              <!-- GESTÃO DA IDENTIDADE VISUAL E LOGO REDONDO -->
-              <div class="bg-rose-50/60 p-4 rounded-2xl border border-rose-200 space-y-3">
-                <h4 class="font-bold text-xs text-rose-900"><i class="fa-solid fa-image mr-2"></i>Logo Redondo e Nome da Loja no Cabeçalho</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Nome Principal da Loja</label>
-                    <input type="text" x-model="config.nomeLoja" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                  </div>
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Subtítulo Abaixo do Nome (ex: Moda Feminina)</label>
-                    <input type="text" x-model="config.subtituloLoja" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                  </div>
-                </div>
-                <div>
-                  <label class="text-[10px] font-bold text-gray-600">URL do Logo Redondo (Cole aqui o link da imagem do seu logo)</label>
-                  <input type="text" x-model="config.logo" placeholder="https://exemplo.com/logo-redondo.png" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                </div>
               </div>
 
               <!-- GESTÃO DO POP-UP -->
@@ -578,7 +555,7 @@
                 </div>
               </div>
 
-              <!-- FRETE -->
+              <!-- CONFIGURAÇÃO DE FRETE (COM SUPER FRETE ADICIONADO) -->
               <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-4">
                 <h4 class="font-bold text-xs text-blue-900"><i class="fa-solid fa-truck-fast mr-2"></i>Integração de Fretes</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -668,9 +645,8 @@
         endereco: { nomeCliente: '', emailCliente: '', cep: '', rua: '', numero: '', bairro: '', cidade: '', estado: '' },
 
         config: {
-          nomeLoja: 'Dridalia',
-          subtituloLoja: 'Moda Feminina',
-          logo: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200',
+          nomeLoja: 'Dridalia Moda Feminina',
+          logo: '',
           banner: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200',
           popupAtivo: true,
           popupTag: 'Oferta Especial',
