@@ -3,7 +3,7 @@
 // Tabelas: usuarios, produtos, pedidos, cupons, config (id=1, data=JSON) + sessoes, paginas, cliques (migracao-01.sql)
 
 const FRETE = 15;
-const PUB = ['nomeLoja', 'logo', 'banner', 'popupAtivo', 'popupTag', 'popupTitulo', 'popupTexto', 'popupImagem']; // únicas chaves da config que o público pode ver
+const PUB = ['nomeLoja', 'logo', 'banner', 'popupAtivo', 'popupTag', 'popupTitulo', 'popupTexto', 'popupImagem', 'popupProdutoId']; // únicas chaves da config que o público pode ver
 const J = (d, s = 200) => Response.json(d, { status: s });
 const jp = (s, d = []) => { try { const v = JSON.parse(s); return v ?? d; } catch { return d; } };
 
@@ -86,6 +86,9 @@ const app = {
         const { itens, endereco, ref } = await body();
         if (!Array.isArray(itens) || !itens.length) return J({ erro: 'Carrinho vazio.' }, 400);
         if (!endereco || !endereco.email) return J({ erro: 'Informe o e-mail.' }, 400);
+        const cfgRow = await DB.prepare('SELECT data FROM config WHERE id=1').first();
+        const mpToken = env.MP_TOKEN || (jp(cfgRow && cfgRow.data, {}).privado || {}).mpToken;
+        if (!mpToken) return J({ erro: 'Pagamento ainda não configurado.' }, 503);
         const lista = []; let total = 0;
         for (const it of itens) { // preço SEMPRE vem do banco
           const pr = await DB.prepare('SELECT id,nome,preco FROM produtos WHERE id=?').bind(it.id).first();
@@ -99,12 +102,19 @@ const app = {
           .bind(endereco.email, ref || null, total + FRETE, 'Pendente', JSON.stringify(itens), JSON.stringify(endereco), new Date().toISOString()).run();
         const r = await fetch('https://api.mercadopago.com/checkout/preferences', {
           method: 'POST',
-          headers: { authorization: 'Bearer ' + env.MP_TOKEN, 'content-type': 'application/json' },
+          headers: { authorization: 'Bearer ' + mpToken, 'content-type': 'application/json' },
           body: JSON.stringify({ items: lista, payer: { email: endereco.email }, external_reference: String(o.meta.last_row_id), back_urls: { success: req.headers.get('origin') || u.origin, failure: req.headers.get('origin') || u.origin, pending: req.headers.get('origin') || u.origin }, auto_return: 'approved' })
         });
         const d = await r.json();
         if (!d.init_point) return J({ erro: 'Falha ao criar pagamento.' }, 502);
         return J({ url: d.init_point });
+      }
+
+      if (p === '/api/afiliado' && m === 'GET') {
+        if (!me) return J({ erro: 'Entre na conta.' }, 401);
+        const c = await DB.prepare('SELECT COUNT(*) n FROM cliques WHERE ref=?').bind(me.codigo_afiliado).first();
+        const v = await DB.prepare('SELECT COUNT(*) n, COALESCE(SUM(comissao_afiliado),0) s FROM pedidos WHERE codigo_afiliado=?').bind(me.codigo_afiliado).first();
+        return J({ cliques: c.n, vendas: v.n, comissao: v.s });
       }
 
       // ---- somente admin ----
@@ -137,6 +147,18 @@ const app = {
       }
 
       if (p.startsWith('/api/page/') && m === 'DELETE') { await DB.prepare('DELETE FROM paginas WHERE id=?').bind(p.split('/').pop()).run(); return J({ ok: 1 }); }
+
+      if (p === '/api/ajustes') { // chaves ficam só no banco, nunca vão para o público
+        const row = await DB.prepare('SELECT data FROM config WHERE id=1').first();
+        const all = jp(row && row.data, {}), pv = all.privado || {};
+        if (m === 'GET') return J({ mpPublicKey: pv.mpPublicKey || '', mpTokenOk: !!pv.mpToken, freteEmpresa: pv.freteEmpresa || 'superfrete', freteTokenOk: !!pv.freteToken, enderecoLoja: pv.enderecoLoja || {} });
+        const b = await body();
+        all.privado = { ...pv, mpPublicKey: b.mpPublicKey ?? pv.mpPublicKey, freteEmpresa: b.freteEmpresa || pv.freteEmpresa, enderecoLoja: b.enderecoLoja || pv.enderecoLoja };
+        if (b.mpToken) all.privado.mpToken = b.mpToken;
+        if (b.freteToken) all.privado.freteToken = b.freteToken;
+        await DB.prepare('INSERT INTO config(id,data) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').bind(JSON.stringify(all)).run();
+        return J({ ok: 1 });
+      }
 
       if (p === '/api/config' && m === 'POST') {
         const b = await body();
