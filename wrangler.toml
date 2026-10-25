@@ -1,0 +1,12 @@
+name = "dridalia-api"
+main = "worker.js"
+compatibility_date = "2025-10-01"
+
+[[d1_databases]]
+binding = "LOJA_DB"
+database_name = "dridalia-db"
+database_id = "COLE_O_ID_AQUI"
+
+[[r2_buckets]]
+binding = "LOJA_R2"
+bucket_name = "dridalia-imagens"
