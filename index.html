@@ -41,21 +41,19 @@
 
   <!-- HEADER DRIDALIA MODA FEMININA -->
   <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
       
       <div class="flex items-center space-x-3">
+        <!-- BOTÃO DE MENU DE TRÊS PAUZINHOS (HAMBÚRGUER) -->
         <button @click="menuLateralAberto = true" class="p-2 text-gray-700 hover:text-rose-600 rounded-lg transition" title="Abrir Menu">
           <i class="fa-solid fa-bars text-xl"></i>
         </button>
 
         <div class="flex items-center space-x-3 cursor-pointer" @click="painelAberto = false">
-          <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-rose-200 shadow-sm bg-rose-50 flex-shrink-0">
-            <img :src="config.logo || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200'" alt="Logo Dridalia" class="w-full h-full object-cover">
-          </div>
-          <div>
-            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-gray-900 font-grife leading-tight" x-text="config.nomeLoja"></h1>
-            <p class="text-[10px] uppercase tracking-widest text-rose-600 font-semibold" x-text="config.subtituloLoja || 'Moda Feminina'"></p>
-          </div>
+          <template x-if="config.logo">
+            <img :src="config.logo" alt="Dridalia Logo" class="h-10 w-auto object-contain">
+          </template>
+          <h1 class="text-xl font-bold tracking-tight text-gray-900 font-grife" x-text="config.nomeLoja"></h1>
         </div>
       </div>
 
@@ -74,7 +72,7 @@
     </div>
   </header>
 
-  <!-- MENU LATERAL -->
+  <!-- MENU LATERAL (GAVETA COM POLÍTICAS E PÁGINAS) -->
   <div x-show="menuLateralAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-start" x-cloak>
     <div class="bg-white w-full max-w-xs h-full shadow-2xl flex flex-col justify-between">
       <div class="p-4 bg-gray-900 text-white flex justify-between items-center">
@@ -112,7 +110,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE VISUALIZAÇÃO DE PÁGINAS -->
+  <!-- MODAL DE VISUALIZAÇÃO DE PÁGINAS E POLÍTICAS -->
   <div x-show="modalPaginaAberto" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" x-cloak>
     <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
       <div class="p-4 bg-gray-900 text-white flex justify-between items-center">
@@ -132,9 +130,9 @@
     </div>
   </div>
 
-  <!-- BANNER -->
+  <!-- BANNER PRINCIPAL DA DRIDALIA -->
   <section x-show="config.banner" class="relative w-full bg-gray-900 overflow-hidden">
-    <img :src="config.banner" alt="Banner" class="w-full h-48 md:h-80 object-cover opacity-85">
+    <img :src="config.banner" alt="Banner Dridalia Moda Feminina" class="w-full h-48 md:h-80 object-cover opacity-85">
   </section>
 
   <!-- VITRINE DE PRODUTOS -->
@@ -143,6 +141,7 @@
       <template x-for="prod in produtos" :key="prod.id">
         <article class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-lg transition duration-300 relative" x-data="{ imgAtiva: 0, corSel: prod.cores ? prod.cores[0] : '', tamSel: prod.tamanhos ? prod.tamanhos[0] : '' }">
           
+          <!-- BARRA DE CONTROLE DO ADMIN -->
           <template x-if="usuario.logado && usuario.email === adminEmail">
             <div class="bg-gray-900 p-2 text-white flex justify-between items-center text-[10px] space-x-1 z-20">
               <button @click="abrirEditarProduto(prod)" class="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded font-bold transition flex items-center space-x-1">
@@ -157,14 +156,15 @@
             </div>
           </template>
 
+          <!-- GALERIA DE IMAGENS -->
           <div class="relative aspect-product bg-gray-100 overflow-hidden group/galeria">
             <img :src="prod.imagens[imgAtiva] || prod.imagem" :alt="prod.nome" class="w-full h-full object-cover transition duration-500" loading="lazy">
             
-            <button @click="falarTexto(prod.nome + '. ' + prod.descricao)" class="absolute top-3 right-3 bg-rose-600 hover:bg-rose-700 text-white p-2.5 rounded-full shadow-lg backdrop-blur-md transition z-10 flex items-center space-x-1" title="Ouvir Áudio">
+            <button @click="falarTexto(prod.nome + '. ' + prod.descricao)" class="absolute top-3 right-3 bg-rose-600 hover:bg-rose-700 text-white p-2.5 rounded-full shadow-lg backdrop-blur-md transition z-10 flex items-center space-x-1" title="Ouvir Descrição em Áudio">
               <i class="fa-solid fa-volume-high text-xs"></i>
             </button>
 
-            <button x-show="usuario.logado" @click="compartilharProduto(prod)" class="absolute top-3 left-3 bg-gray-900 hover:bg-black text-white p-2.5 rounded-full shadow-md transition z-10" title="Copiar link">
+            <button x-show="usuario.logado" @click="compartilharProduto(prod)" class="absolute top-3 left-3 bg-gray-900 hover:bg-black text-white p-2.5 rounded-full shadow-md transition z-10" title="Copiar link de Afiliado">
               <i class="fa-solid fa-share-nodes text-xs"></i>
             </button>
 
@@ -176,10 +176,16 @@
                 <button @click="imgAtiva = (imgAtiva === prod.imagens.length - 1) ? 0 : imgAtiva + 1" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black text-white w-7 h-7 rounded-full flex items-center justify-center transition">
                   <i class="fa-solid fa-chevron-right text-xs"></i>
                 </button>
+                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1.5 z-10">
+                  <template x-for="(img, idx) in prod.imagens" :key="idx">
+                    <button @click="imgAtiva = idx" :class="imgAtiva === idx ? 'bg-rose-600 w-4' : 'bg-white/80 w-1.5'" class="h-1.5 rounded-full transition-all duration-300"></button>
+                  </template>
+                </div>
               </div>
             </template>
           </div>
 
+          <!-- Informações -->
           <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
             <div>
               <h2 class="font-bold text-gray-900 text-base line-clamp-1" x-text="prod.nome"></h2>
@@ -210,10 +216,13 @@
 
               <div class="grid grid-cols-2 gap-2 mt-3">
                 <button @click="abrirChatbot(prod)" class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 transition">
-                  <i class="fa-solid fa-comments text-rose-600"></i><span>Dúvidas</span>
+                  <i class="fa-solid fa-comments text-rose-600"></i>
+                  <span>Dúvidas</span>
                 </button>
+
                 <button @click="adicionarAoCarrinho(prod, corSel, tamSel)" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center space-x-1 shadow transition">
-                  <i class="fa-solid fa-cart-plus"></i><span>Comprar</span>
+                  <i class="fa-solid fa-cart-plus"></i>
+                  <span>Comprar</span>
                 </button>
               </div>
             </div>
@@ -224,7 +233,7 @@
     </div>
   </main>
 
-  <!-- DRAWER DO CARRINHO & CHECKOUT -->
+  <!-- DRAWER DO CARRINHO & CHECKOUT (COM ORDER BUMP) -->
   <div x-show="carrinhoAberto" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end" x-cloak>
     <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between">
       <div class="p-4 bg-gray-900 text-white flex justify-between items-center border-b border-gray-800">
@@ -243,7 +252,7 @@
           </div>
         </template>
 
-        <!-- ITENS -->
+        <!-- ITENS DO CARRINHO -->
         <template x-for="(item, index) in carrinho" :key="index">
           <div class="flex items-center space-x-3 border-b pb-3">
             <img :src="item.imagens ? item.imagens[0] : item.imagem" class="w-16 h-16 object-cover rounded-xl border">
@@ -266,7 +275,31 @@
           </div>
         </template>
 
-        <!-- ENDEREÇO -->
+        <!-- ORDER BUMP -->
+        <div x-show="carrinho.length > 0" class="bg-rose-50/70 p-3.5 rounded-2xl border border-rose-200 space-y-2.5">
+          <h4 class="font-bold text-xs text-rose-900 flex items-center">
+            <i class="fa-solid fa-gift text-rose-600 mr-1.5"></i>Você também pode gostar disso (Oferta Especial):
+          </h4>
+          
+          <div class="space-y-2">
+            <template x-for="prodSugerido in produtos.slice(0, 3)" :key="prodSugerido.id">
+              <div class="bg-white p-2.5 rounded-xl border flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-2.5 min-w-0">
+                  <img :src="prodSugerido.imagens ? prodSugerido.imagens[0] : prodSugerido.imagem" class="w-12 h-12 object-cover rounded-lg border flex-shrink-0">
+                  <div class="min-w-0">
+                    <h5 class="font-bold text-[11px] text-gray-900 truncate" x-text="prodSugerido.nome"></h5>
+                    <p class="text-[11px] font-black text-rose-600" x-text="'R$ ' + prodSugerido.preco.toFixed(2)"></p>
+                  </div>
+                </div>
+                <button @click="adicionarAoCarrinho(prodSugerido, prodSugerido.cores ? prodSugerido.cores[0] : 'Padrão', prodSugerido.tamanhos ? prodSugerido.tamanhos[0] : 'M')" class="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-lg shadow transition whitespace-nowrap">
+                  + Adicionar
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- ENDEREÇO DE ENTREGA -->
         <div x-show="carrinho.length > 0" class="bg-gray-50 p-4 rounded-2xl border space-y-3">
           <div class="flex items-center justify-between">
             <h4 class="font-bold text-xs text-gray-900 flex items-center">
@@ -357,6 +390,7 @@
           <button @click="abaPainel = 'compras'" :class="abaPainel === 'compras' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-white' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
             <i class="fa-solid fa-bag-shopping mr-1.5"></i>Minhas Compras
           </button>
+
           <button @click="abaPainel = 'afiliado'" :class="abaPainel === 'afiliado' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-white' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
             <i class="fa-solid fa-sack-dollar mr-1.5 text-emerald-600"></i>Painel de Afiliado
           </button>
@@ -364,7 +398,13 @@
           <template x-if="usuario.email === adminEmail">
             <div class="flex">
               <button @click="abaPainel = 'admin'" :class="abaPainel === 'admin' ? 'border-b-2 border-rose-600 font-bold text-rose-600 bg-rose-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
-                <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Admin Nuvem
+                <i class="fa-solid fa-sliders mr-1.5 text-rose-600"></i>Admin Loja
+              </button>
+              <button @click="abaPainel = 'paginas'" :class="abaPainel === 'paginas' ? 'border-b-2 border-blue-600 font-bold text-blue-600 bg-blue-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
+                <i class="fa-solid fa-file-circle-plus mr-1.5 text-blue-600"></i>📄 Páginas
+              </button>
+              <button @click="abaPainel = 'metricas'" :class="abaPainel === 'metricas' ? 'border-b-2 border-purple-600 font-bold text-purple-600 bg-purple-50' : 'text-gray-600'" class="px-5 py-3.5 font-semibold">
+                <i class="fa-solid fa-chart-line mr-1.5 text-purple-600"></i>📊 Métricas
               </button>
             </div>
           </template>
@@ -429,22 +469,70 @@
                   <p class="text-lg font-mono font-bold text-purple-600 mt-1" x-text="usuario.codigoAfiliado"></p>
                 </div>
               </div>
+              <div class="bg-gray-50 border p-4 rounded-2xl space-y-2">
+                <label class="block text-xs font-semibold text-gray-700">Seu Link de Afiliado</label>
+                <div class="flex space-x-2">
+                  <input type="text" readonly :value="window.location.origin + '?ref=' + usuario.codigoAfiliado" class="w-full p-2.5 border rounded-xl bg-white text-xs font-mono text-gray-700">
+                  <button @click="copiarTexto(window.location.origin + '?ref=' + usuario.codigoAfiliado)" class="px-4 py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl">Copiar</button>
+                </div>
+              </div>
             </div>
 
-            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (CLOUD) -->
+            <!-- ABA DE GESTÃO DE PÁGINAS -->
+            <div x-show="abaPainel === 'paginas'" class="space-y-6">
+              <div class="border-b pb-3">
+                <h3 class="font-bold text-gray-900 text-lg">Criar e Gerenciar Páginas da Loja</h3>
+              </div>
+              <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-3">
+                <h4 class="font-bold text-xs text-blue-900"><i class="fa-solid fa-plus-circle mr-1.5"></i>Nova Página Personalizada</h4>
+                <input type="text" x-model="novaPagina.titulo" placeholder="Título da Página" class="w-full p-2.5 border rounded-xl text-xs bg-white">
+                <input type="text" x-model="novaPagina.imagem" placeholder="URL da Imagem da Página" class="w-full p-2.5 border rounded-xl text-xs bg-white">
+                <textarea x-model="novaPagina.descricao" placeholder="Descrição / Conteúdo..." class="w-full p-2.5 border rounded-xl text-xs bg-white h-20"></textarea>
+                <input type="text" x-model="novaPagina.link" placeholder="Link de Destino do Botão" class="w-full p-2.5 border rounded-xl text-xs bg-white">
+                <button @click="adicionarPaginaAdmin()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow">Criar Página</button>
+              </div>
+
+              <div class="space-y-2">
+                <h4 class="font-bold text-xs text-gray-700">Páginas Criadas:</h4>
+                <template x-for="(p, index) in paginasAdmin" :key="p.id">
+                  <div class="p-3 bg-white border rounded-xl flex items-center justify-between">
+                    <div>
+                      <h5 class="font-bold text-xs text-gray-900" x-text="p.titulo"></h5>
+                    </div>
+                    <button @click="excluirPaginaAdmin(index)" class="text-red-500 text-xs p-2"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- MENU DE MÉTRICAS -->
+            <div x-show="abaPainel === 'metricas'" class="space-y-6">
+              <div class="border-b pb-3 flex justify-between items-center">
+                <h3 class="font-bold text-gray-900 text-lg">Métricas de Cliques e Tráfego</h3>
+                <button @click="limparMetricas()" class="bg-red-100 text-red-700 text-xs px-3 py-1.5 rounded-xl font-bold">Limpar</button>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="bg-purple-50 border p-4 rounded-2xl">
+                  <span class="text-[10px] font-bold text-purple-800 uppercase">Total de Cliques</span>
+                  <p class="text-2xl font-black text-purple-600 mt-1" x-text="metricasCliques.length"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- PAINEL ADMIN DE CONFIGURAÇÕES (COM SUPER FRETE) -->
             <div x-show="abaPainel === 'admin'" class="space-y-6">
               <div class="border-b pb-3 flex justify-between items-center">
                 <div>
-                  <h3 class="font-bold text-gray-900 text-lg">Painel Admin Cloudflare (D1 / Worker)</h3>
-                  <p class="text-xs text-gray-500">Tudo o que salvar aqui vai direto para o Banco D1 na nuvem.</p>
+                  <h3 class="font-bold text-gray-900 text-lg">Painel de Controle Administrador</h3>
+                  <p class="text-xs text-gray-500">Gerencie Pop-up, Mercado Pago, Frete e Produtos.</p>
                 </div>
-                <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Admin Nuvem</span>
+                <span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-1 rounded-full font-bold">Admin Supremo</span>
               </div>
 
               <!-- GESTÃO DO POP-UP -->
               <div class="bg-amber-50/60 p-4 rounded-2xl border border-amber-200 space-y-3">
                 <div class="flex items-center justify-between">
-                  <h4 class="font-bold text-xs text-amber-900"><i class="fa-solid fa-bullhorn mr-2"></i>Pop-up Promocional (Nuvem)</h4>
+                  <h4 class="font-bold text-xs text-amber-900"><i class="fa-solid fa-bullhorn mr-2"></i>Pop-up Promocional</h4>
                   <label class="flex items-center space-x-2 text-xs font-semibold cursor-pointer">
                     <input type="checkbox" x-model="config.popupAtivo" class="rounded text-rose-600">
                     <span>Ativar Pop-up</span>
@@ -454,51 +542,8 @@
                   <input type="text" x-model="config.popupTag" placeholder="Tag" class="p-2 border rounded-xl text-xs bg-white">
                   <input type="text" x-model="config.popupTitulo" placeholder="Título" class="p-2 border rounded-xl text-xs bg-white">
                 </div>
-                <input type="text" x-model="config.popupImagem" placeholder="URL da Imagem do Pop-up" class="w-full p-2 border rounded-xl text-xs bg-white">
+                <input type="text" x-model="config.popupImagem" placeholder="URL da Imagem" class="w-full p-2 border rounded-xl text-xs bg-white">
                 <textarea x-model="config.popupTexto" placeholder="Texto..." class="w-full p-2 border rounded-xl text-xs bg-white h-16"></textarea>
-              </div>
-
-              <!-- LOGO E IDENTIDADE -->
-              <div class="bg-rose-50/60 p-4 rounded-2xl border border-rose-200 space-y-3">
-                <h4 class="font-bold text-xs text-rose-900"><i class="fa-solid fa-image mr-2"></i>Logo Redondo e Nome da Loja</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Nome Principal</label>
-                    <input type="text" x-model="config.nomeLoja" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                  </div>
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Subtítulo</label>
-                    <input type="text" x-model="config.subtituloLoja" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                  </div>
-                </div>
-                <div>
-                  <label class="text-[10px] font-bold text-gray-600">URL do Logo Redondo</label>
-                  <input type="text" x-model="config.logo" placeholder="https://..." class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                </div>
-              </div>
-
-              <!-- FRETE -->
-              <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-4">
-                <h4 class="font-bold text-xs text-blue-900"><i class="fa-solid fa-truck-fast mr-2"></i>Configuração de Frete (Super Frete)</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Plataforma</label>
-                    <select x-model="config.freteEmpresa" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                      <option value="superfrete">Super Frete</option>
-                      <option value="melhorenvio">Melhor Envio</option>
-                      <option value="frenet">Frenet API</option>
-                      <option value="correios">Correios Direct API</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">CEP de Origem</label>
-                    <input type="text" x-model="config.cepOrigem" placeholder="Ex: 01001-000" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1 font-mono">
-                  </div>
-                  <div>
-                    <label class="text-[10px] font-bold text-gray-600">Token da API</label>
-                    <input type="password" x-model="config.freteToken" placeholder="Token" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
-                  </div>
-                </div>
               </div>
 
               <!-- MERCADO PAGO -->
@@ -510,19 +555,49 @@
                 </div>
               </div>
 
+              <!-- CONFIGURAÇÃO DE FRETE (COM SUPER FRETE ADICIONADO) -->
+              <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 space-y-4">
+                <h4 class="font-bold text-xs text-blue-900"><i class="fa-solid fa-truck-fast mr-2"></i>Integração de Fretes</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Plataforma de Frete Principal</label>
+                    <select x-model="config.freteEmpresa" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                      <option value="superfrete">Super Frete</option>
+                      <option value="melhorenvio">Melhor Envio</option>
+                      <option value="frenet">Frenet API</option>
+                      <option value="correios">Correios Direct API</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-[10px] font-bold text-gray-600">Token da API de Frete</label>
+                    <input type="password" x-model="config.freteToken" placeholder="Cole o token da API" class="w-full p-2.5 border rounded-xl text-xs bg-white mt-1">
+                  </div>
+                </div>
+              </div>
+
               <!-- CADASTRAR PRODUTOS -->
               <div class="bg-gray-50 p-4 rounded-2xl border space-y-3">
-                <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-plus-circle text-emerald-600 mr-1.5"></i>Cadastrar Novo Produto na Nuvem (D1)</h4>
+                <h4 class="font-bold text-xs text-gray-900"><i class="fa-solid fa-plus-circle text-emerald-600 mr-1.5"></i>Cadastrar Novo Produto (até 5 Imagens)</h4>
+                
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <input type="text" x-model="novoProd.nome" placeholder="Nome do Produto" class="p-2 border rounded-xl text-xs bg-white">
                   <input type="number" x-model.number="novoProd.preco" placeholder="Preço (R$)" class="p-2 border rounded-xl text-xs bg-white">
                 </div>
-                <input type="text" x-model="novoProd.img1" placeholder="URL da Imagem 1" class="w-full p-2 border rounded-xl text-xs bg-white">
-                <textarea x-model="novoProd.descricao" placeholder="Descrição..." class="w-full p-2 border rounded-xl text-xs bg-white h-16"></textarea>
-                <button @click="adicionarProduto()" class="w-full py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Cadastrar Produto na Nuvem</button>
+
+                <div class="space-y-1.5">
+                  <label class="text-[10px] font-bold text-gray-600">URLs das Imagens:</label>
+                  <input type="text" x-model="novoProd.img1" placeholder="URL da Imagem 1 (Principal)" class="w-full p-2 border rounded-xl text-xs bg-white">
+                  <input type="text" x-model="novoProd.img2" placeholder="URL da Imagem 2 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
+                  <input type="text" x-model="novoProd.img3" placeholder="URL da Imagem 3 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
+                  <input type="text" x-model="novoProd.img4" placeholder="URL da Imagem 4 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
+                  <input type="text" x-model="novoProd.img5" placeholder="URL da Imagem 5 (Opcional)" class="w-full p-2 border rounded-xl text-xs bg-white">
+                </div>
+
+                <textarea x-model="novoProd.descricao" placeholder="Descrição do produto..." class="w-full p-2 border rounded-xl text-xs bg-white h-16"></textarea>
+                <button @click="adicionarProduto()" class="w-full py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl shadow">Cadastrar Produto</button>
               </div>
 
-              <button @click="salvarConfiguracoes()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition">Salvar Alterações no Cloudflare D1</button>
+              <button @click="salvarConfiguracoes()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition">Salvar Alterações da Loja</button>
             </div>
           </div>
         </template>
@@ -540,7 +615,6 @@
     function dridaliaApp() {
       return {
         adminEmail: 'jeanaguiar636@gmail.com',
-        workerUrl: 'https://dridalia-api.bmlimp8.workers.dev',
 
         painelAberto: false,
         carrinhoAberto: false,
@@ -571,9 +645,8 @@
         endereco: { nomeCliente: '', emailCliente: '', cep: '', rua: '', numero: '', bairro: '', cidade: '', estado: '' },
 
         config: {
-          nomeLoja: 'Dridalia',
-          subtituloLoja: 'Moda Feminina',
-          logo: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200',
+          nomeLoja: 'Dridalia Moda Feminina',
+          logo: '',
           banner: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200',
           popupAtivo: true,
           popupTag: 'Oferta Especial',
@@ -583,7 +656,6 @@
           mercadopagoPublicKey: '',
           mercadopagoAccessToken: '',
           freteEmpresa: 'superfrete',
-          cepOrigem: '',
           freteToken: ''
         },
 
@@ -607,119 +679,206 @@
         novaPagina: { titulo: '', imagem: '', descricao: '', link: '' },
         paginasAdmin: [],
 
-        produtos: [],
+        produtos: [
+          {
+            id: 1,
+            nome: 'Conjunto Tati Moletinho Premium',
+            preco: 189.90,
+            descricao: 'Conjunto de moletinho super macio e elegante.',
+            tamanhos: ['P', 'M', 'G', 'GG'],
+            cores: ['Rosa', 'Preto', 'Nude'],
+            imagens: [
+              'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600',
+              'https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=600'
+            ],
+            faqs: [{ pergunta: 'Encolhe?', resposta: 'Não encolhe na lavagem.' }]
+          },
+          {
+            id: 2,
+            nome: 'Vestido Midi Elegance Alfaiataria',
+            preco: 239.90,
+            descricao: 'Vestido midi fluido de alfaiataria com corte impecável.',
+            tamanhos: ['P', 'M', 'G'],
+            cores: ['Preto', 'Nude', 'Vinho'],
+            imagens: [
+              'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=600'
+            ],
+            faqs: []
+          }
+        ],
+
         carrinho: [],
         metricasCliques: [],
 
-        async init() {
-          // Carregar Sessão local
+        init() {
+          const cfg = localStorage.getItem('dridalia_config');
+          if (cfg) this.config = JSON.parse(cfg);
+
+          const prods = localStorage.getItem('dridalia_produtos');
+          if (prods) this.produtos = JSON.parse(prods);
+
           const sessao = localStorage.getItem('dridalia_sessao');
-          if (sessao) { try { this.usuario = JSON.parse(sessao); } catch(e) {} }
+          if (sessao) this.usuario = JSON.parse(sessao);
 
           const end = localStorage.getItem('dridalia_endereco');
-          if (end) { try { this.endereco = JSON.parse(end); this.enderecoSalvo = true; } catch(e) {} }
+          if (end) { this.endereco = JSON.parse(end); this.enderecoSalvo = true; }
 
           const car = localStorage.getItem('dridalia_carrinho');
-          if (car) { try { this.carrinho = JSON.parse(car); } catch(e) {} }
+          if (car) this.carrinho = JSON.parse(car);
 
-          // Buscar Configurações e Produtos do Cloudflare D1 via Worker
-          try {
-            const resConfig = await fetch(this.workerUrl + '/api/config');
-            const dataConfig = await resConfig.json();
-            if (dataConfig && Object.keys(dataConfig).length > 0) {
-              this.config = { ...this.config, ...dataConfig };
-            }
-          } catch(err) {
-            console.error('Erro ao carregar config da nuvem:', err);
-          }
+          const met = localStorage.getItem('dridalia_metricas_cliques');
+          if (met) this.metricasCliques = JSON.parse(met);
 
-          try {
-            const resProd = await fetch(this.workerUrl + '/api/produtos');
-            const dataProd = await resProd.json();
-            if (Array.isArray(dataProd) && dataProd.length > 0) {
-              this.produtos = dataProd;
-            } else {
-              this.produtos = [{
-                id: '1',
-                nome: 'Conjunto Tati Moletinho Premium',
-                preco: 189.90,
-                descricao: 'Conjunto de moletinho super macio e elegante.',
-                tamanhos: ['P', 'M', 'G', 'GG'],
-                cores: ['Rosa', 'Preto', 'Nude'],
-                imagens: ['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600'],
-                faqs: []
-              }];
-            }
-          } catch(err) {
-            console.error('Erro ao carregar produtos da nuvem:', err);
+          const pgs = localStorage.getItem('dridalia_paginas_admin');
+          if (pgs) this.paginasAdmin = JSON.parse(pgs);
+
+          const urlParams = new URLSearchParams(window.location.search);
+          const refParam = urlParams.get('ref');
+          const prodParam = urlParams.get('prod');
+
+          if (refParam || prodParam) {
+            const novoClique = {
+              id: Date.now(),
+              data: new Date().toLocaleString('pt-BR'),
+              usuario: this.usuario.logado ? `${this.usuario.nome} (${this.usuario.email})` : 'Visitante Anônimo',
+              ref: refParam ? refParam : 'Tráfego Direto',
+              localizacao: 'Brasil (IP Rastreado)',
+              origem: prodParam ? `Produto ID: ${prodParam}` : 'Acesso Geral à Loja'
+            };
+            this.metricasCliques.unshift(novoClique);
+            localStorage.setItem('dridalia_metricas_cliques', JSON.stringify(this.metricasCliques));
           }
         },
 
-        async salvarConfiguracoes() {
-          try {
-            const res = await fetch(this.workerUrl + '/api/config', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(this.config)
-            });
-            if (res.ok) {
-              alert('Configurações e Pop-up salvos com sucesso no Cloudflare D1!');
-            } else {
-              alert('Erro ao salvar no servidor.');
-            }
-          } catch(err) {
-            alert('Erro de conexão com a nuvem: ' + err.message);
+        abrirPaginaInstitucional(tipo) {
+          this.menuLateralAberto = false;
+          if (tipo === 'privacidade') {
+            this.paginaAtual = {
+              titulo: 'Política de Privacidade',
+              imagem: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600',
+              descricao: 'A sua privacidade é importante para nós. É política da Dridalia respeitar a sua privacidade em relação a qualquer informação sua.'
+            };
+          } else if (tipo === 'entrega') {
+            this.paginaAtual = {
+              titulo: 'Política de Frete e Entrega',
+              imagem: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=600',
+              descricao: 'Enviamos para todo o Brasil com rapidez e segurança via Super Frete e Correios.'
+            };
+          } else if (tipo === 'devolucao') {
+            this.paginaAtual = {
+              titulo: 'Política de Trocas e Devoluções',
+              imagem: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=600',
+              descricao: 'Garantimos a sua satisfação! Você tem até 7 dias corridos após o recebimento.'
+            };
           }
+          this.modalPaginaAberto = true;
         },
 
-        async adicionarProduto() {
-          if (!this.novoProd.nome || !this.novoProd.preco || !this.novoProd.img1) {
-            alert('Preencha nome, preço e pelo menos a imagem 1.');
+        abrirPaginaDinamica(pag) {
+          this.menuLateralAberto = false;
+          this.paginaAtual = pag;
+          this.modalPaginaAberto = true;
+        },
+
+        adicionarPaginaAdmin() {
+          if (!this.novaPagina.titulo || !this.novaPagina.descricao) {
+            alert('Preencha pelo menos o título e a descrição da página.');
             return;
           }
-          const novoObj = {
-            id: 'prod_' + Date.now(),
-            nome: this.novoProd.nome,
-            preco: parseFloat(this.novoProd.preco),
-            descricao: this.novoProd.descricao,
-            tamanhos: ['P', 'M', 'G', 'GG'],
-            cores: ['Rosa', 'Preto', 'Nude'],
-            imagens: [this.novoProd.img1, this.novoProd.img2, this.novoProd.img3, this.novoProd.img4, this.novoProd.img5].filter(Boolean),
-            faqs: []
-          };
+          this.paginasAdmin.push({ id: Date.now(), ...this.novaPagina });
+          localStorage.setItem('dridalia_paginas_admin', JSON.stringify(this.paginasAdmin));
+          this.novaPagina = { titulo: '', imagem: '', descricao: '', link: '' };
+          alert('Página criada com sucesso!');
+        },
 
-          try {
-            const res = await fetch(this.workerUrl + '/api/produtos', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(novoObj)
-            });
-            if (res.ok) {
-              this.produtos.push(novoObj);
-              this.novoProd = { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' };
-              alert('Produto cadastrado com sucesso no Cloudflare D1!');
-            } else {
-              alert('Erro ao salvar produto.');
-            }
-          } catch(err) {
-            alert('Erro de conexão: ' + err.message);
+        excluirPaginaAdmin(index) {
+          if (confirm('Deseja excluir esta página?')) {
+            this.paginasAdmin.splice(index, 1);
+            localStorage.setItem('dridalia_paginas_admin', JSON.stringify(this.paginasAdmin));
           }
         },
 
-        async excluirProduto(id) {
-          if (confirm('Deseja excluir este produto do banco D1?')) {
-            try {
-              const res = await fetch(this.workerUrl + '/api/produtos/' + id, { method: 'DELETE' });
-              if (res.ok) {
-                this.produtos = this.produtos.filter(p => p.id !== id);
-                alert('Produto excluído com sucesso!');
-              } else {
-                alert('Erro ao excluir.');
-              }
-            } catch(err) {
-              alert('Erro de conexão: ' + err.message);
-            }
+        get faqsParaExibir() {
+          if (this.produtoChat && this.produtoChat.faqs && this.produtoChat.faqs.length > 0) {
+            return this.produtoChat.faqs;
           }
+          return this.faqsPadrao;
+        },
+
+        limparMetricas() {
+          if (confirm('Deseja limpar todo o histórico de cliques e métricas?')) {
+            this.metricasCliques = [];
+            localStorage.removeItem('dridalia_metricas_cliques');
+          }
+        },
+
+        abrirFaqProduto(prod) {
+          this.prodEditandoFaq = prod;
+          if (!this.prodEditandoFaq.faqs) this.prodEditandoFaq.faqs = [];
+          this.modalFaqProdutoAberto = true;
+        },
+
+        adicionarFaqAoProduto() {
+          if (!this.novaFaqProd.pergunta || !this.novaFaqProd.resposta) return;
+          this.prodEditandoFaq.faqs.push({ ...this.novaFaqProd });
+          this.salvarProdutosStorage();
+          this.novaFaqProd = { pergunta: '', resposta: '' };
+        },
+
+        removerFaqDoProduto(index) {
+          this.prodEditandoFaq.faqs.splice(index, 1);
+          this.salvarProdutosStorage();
+        },
+
+        abrirEditarProduto(prod) {
+          this.prodEmEdicao = {
+            id: prod.id,
+            nome: prod.nome,
+            preco: prod.preco,
+            descricao: prod.descricao,
+            tamanhos: prod.tamanhos || ['P', 'M', 'G', 'GG'],
+            cores: prod.cores || ['Rosa', 'Preto', 'Nude'],
+            img1: prod.imagens && prod.imagens[0] ? prod.imagens[0] : '',
+            img2: prod.imagens && prod.imagens[1] ? prod.imagens[1] : '',
+            img3: prod.imagens && prod.imagens[2] ? prod.imagens[2] : '',
+            img4: prod.imagens && prod.imagens[3] ? prod.imagens[3] : '',
+            img5: prod.imagens && prod.imagens[4] ? prod.imagens[4] : '',
+            faqs: prod.faqs || []
+          };
+          this.modalEditProdutoAberto = true;
+        },
+
+        salvarEdicaoProduto() {
+          const idx = this.produtos.findIndex(p => p.id === this.prodEmEdicao.id);
+          if (idx > -1) {
+            const imgs = [this.prodEmEdicao.img1, this.prodEmEdicao.img2, this.prodEmEdicao.img3, this.prodEmEdicao.img4, this.prodEmEdicao.img5].filter(Boolean);
+            
+            this.produtos[idx] = {
+              id: this.prodEmEdicao.id,
+              nome: this.prodEmEdicao.nome,
+              preco: this.prodEmEdicao.preco,
+              descricao: this.prodEmEdicao.descricao,
+              tamanhos: this.prodEmEdicao.tamanhos,
+              cores: this.prodEmEdicao.cores,
+              imagens: imgs,
+              faqs: this.prodEmEdicao.faqs
+            };
+
+            this.salvarProdutosStorage();
+            this.modalEditProdutoAberto = false;
+            alert('Produto atualizado com sucesso!');
+          }
+        },
+
+        excluirProduto(id) {
+          if (confirm('Deseja excluir este produto?')) {
+            this.produtos = this.produtos.filter(p => p.id !== id);
+            this.salvarProdutosStorage();
+          }
+        },
+
+        salvarProdutosStorage() {
+          localStorage.setItem('dridalia_produtos', JSON.stringify(this.produtos));
         },
 
         buscarCep() {
@@ -740,7 +899,7 @@
 
         salvarEndereco() {
           if (!this.endereco.nomeCliente || !this.endereco.cep || !this.endereco.rua || !this.endereco.numero) {
-            alert('Preencha o endereço.');
+            alert('Preencha os dados de endereço.');
             return;
           }
           if (!this.usuario.logado) {
@@ -759,6 +918,21 @@
           this.chatbotAberto = true;
         },
 
+        selecionarFaq(faq) {
+          this.chatMensagens.push({ tipo: 'usuario', texto: faq.pergunta });
+          setTimeout(() => { this.chatMensagens.push({ tipo: 'bot', texto: faq.resposta }); }, 300);
+        },
+
+        enviarMensagemLivre() {
+          if (!this.mensagemChat.trim()) return;
+          const txt = this.mensagemChat;
+          this.chatMensagens.push({ tipo: 'usuario', texto: txt });
+          this.mensagemChat = '';
+          setTimeout(() => {
+            this.chatMensagens.push({ tipo: 'bot', texto: `Obrigada pela pergunta! Nossa equipe responderá em breve.` });
+          }, 500);
+        },
+
         clicarMinhaConta() { this.painelAberto = true; if (!this.usuario.logado) this.modoConta = 'login'; },
 
         fazerLogin() {
@@ -773,7 +947,7 @@
           const cod = 'DRI-' + Math.random().toString(36).substring(2, 7).toUpperCase();
           this.usuario = { logado: true, nome: this.formCadastro.nome, email: this.formCadastro.email.toLowerCase(), codigoAfiliado: cod, ganhosAfiliado: 0, vendasAfiliado: 0 };
           localStorage.setItem('dridalia_sessao', JSON.stringify(this.usuario));
-          alert('Conta criada!');
+          alert('Conta criada com sucesso!');
         },
 
         deslogar() {
@@ -806,7 +980,35 @@
 
         copiarTexto(txt) {
           navigator.clipboard.writeText(txt);
-          alert('Link copiado!');
+          alert('Link copiado com sucesso!');
+        },
+
+        adicionarProduto() {
+          if (!this.novoProd.nome || !this.novoProd.preco || !this.novoProd.img1) {
+            alert('Preencha nome, preço e pelo menos a imagem 1.');
+            return;
+          }
+          const imgs = [this.novoProd.img1, this.novoProd.img2, this.novoProd.img3, this.novoProd.img4, this.novoProd.img5].filter(Boolean);
+          
+          this.produtos.push({
+            id: Date.now(),
+            nome: this.novoProd.nome,
+            preco: this.novoProd.preco,
+            descricao: this.novoProd.descricao,
+            tamanhos: ['P', 'M', 'G', 'GG'],
+            cores: ['Rosa', 'Preto', 'Nude'],
+            imagens: imgs,
+            faqs: []
+          });
+
+          this.salvarProdutosStorage();
+          this.novoProd = { nome: '', preco: null, img1: '', img2: '', img3: '', img4: '', img5: '', descricao: '' };
+          alert('Produto cadastrado com sucesso!');
+        },
+
+        salvarConfiguracoes() {
+          localStorage.setItem('dridalia_config', JSON.stringify(this.config));
+          alert('Configurações salvas!');
         },
 
         falarTexto(txt) {
