@@ -141,8 +141,8 @@ const app = {
         lista.push({ title: 'Frete - ' + op.nome, quantity: 1, unit_price: op.preco, currency_id: 'BRL' });
         let comissao = 0, refOk = null; // comissão sobre os produtos (sem frete); compra do próprio afiliado não rende
         if (ref) {
-          const af = await DB.prepare('SELECT email FROM usuarios WHERE codigo_afiliado=?').bind(ref).first();
-          if (af && af.email !== String(endereco.email).toLowerCase().trim()) {
+          const af = await DB.prepare('SELECT email, COALESCE(bloqueado,0) bloqueado FROM usuarios WHERE codigo_afiliado=?').bind(ref).first();
+          if (af && !af.bloqueado && af.email !== String(endereco.email).toLowerCase().trim()) {
             refOk = ref;
             const pct = Number((jp(cfgRow && cfgRow.data, {}).privado || {}).comissaoPct) || 0;
             comissao = Math.round(total * pct) / 100;
@@ -165,7 +165,7 @@ const app = {
         const c = await DB.prepare('SELECT COUNT(*) n FROM cliques WHERE ref=?').bind(me.codigo_afiliado).first();
         const v = await DB.prepare("SELECT COALESCE(SUM(CASE WHEN status='Pago' THEN 1 ELSE 0 END),0) n, COALESCE(SUM(CASE WHEN status='Pago' THEN comissao_afiliado ELSE 0 END),0) s, COALESCE(SUM(CASE WHEN status='Pendente' THEN comissao_afiliado ELSE 0 END),0) pend FROM pedidos WHERE codigo_afiliado=?").bind(me.codigo_afiliado).first();
         const cf = await DB.prepare('SELECT data FROM config WHERE id=1').first();
-        return J({ cliques: c.n, vendas: v.n, comissao: v.s, pendente: v.pend, pct: Number((jp(cf && cf.data, {}).privado || {}).comissaoPct) || 0 });
+        return J({ cliques: c.n, vendas: v.n, comissao: v.s, pendente: v.pend, bloqueado: !!me.bloqueado, pct: Number((jp(cf && cf.data, {}).privado || {}).comissaoPct) || 0 });
       }
 
       // ---- somente admin ----
@@ -190,6 +190,22 @@ const app = {
       }
 
       if (p.startsWith('/api/product/') && m === 'DELETE') { await DB.prepare('DELETE FROM produtos WHERE id=?').bind(p.split('/').pop()).run(); return J({ ok: 1 }); }
+
+      if (p === '/api/afiliados' && m === 'GET') { // visão do admin: todos os afiliados e suas métricas
+        const rows = await DB.prepare(`SELECT u.id, u.nome, u.email, u.codigo_afiliado codigo, COALESCE(u.bloqueado,0) bloqueado, u.criado_em,
+          (SELECT COUNT(*) FROM cliques c WHERE c.ref = u.codigo_afiliado) cliques,
+          (SELECT COUNT(*) FROM pedidos o WHERE o.codigo_afiliado = u.codigo_afiliado AND o.status = 'Pago') vendas,
+          (SELECT COALESCE(SUM(comissao_afiliado),0) FROM pedidos o WHERE o.codigo_afiliado = u.codigo_afiliado AND o.status = 'Pago') ganhos,
+          (SELECT COALESCE(SUM(comissao_afiliado),0) FROM pedidos o WHERE o.codigo_afiliado = u.codigo_afiliado AND o.status = 'Pendente') pendente
+          FROM usuarios u WHERE u.codigo_afiliado IS NOT NULL ORDER BY cliques DESC, u.id DESC LIMIT 500`).all();
+        return J({ afiliados: rows.results });
+      }
+
+      if (p === '/api/afiliados/bloquear' && m === 'POST') {
+        const b = await body();
+        await DB.prepare('UPDATE usuarios SET bloqueado=? WHERE id=?').bind(b.bloqueado ? 1 : 0, b.id).run();
+        return J({ ok: 1 });
+      }
 
       if (p === '/api/faqs' && m === 'POST') { // perguntas e respostas do chatbot de cada produto
         const b = await body();
