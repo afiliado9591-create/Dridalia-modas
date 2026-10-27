@@ -190,6 +190,7 @@
     <div x-show="user" class="flex border-b bg-gray-50 text-xs overflow-x-auto">
       <button @click="aba='afiliado'" :class="aba==='afiliado'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Afiliado (ganhos)</button>
       <template x-if="user&&user.admin"><div class="flex">
+        <button @click="aba='afiliados';carregarAfs()" :class="aba==='afiliados'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Afiliados</button>
         <button @click="aba='produtos'" :class="aba==='produtos'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Produto</button>
         <button @click="aba='paginas'" :class="aba==='paginas'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Páginas</button>
         <button @click="aba='loja';carregarAj()" :class="aba==='loja'?'border-b-2 border-rose-600 text-rose-600 bg-white':''" class="px-5 py-3 font-semibold">Loja</button>
@@ -211,8 +212,33 @@
       <div x-show="user&&aba==='afiliado'" class="space-y-3">
         <div class="bg-purple-50 border p-4 rounded-2xl"><span class="text-[10px] font-bold text-purple-800 uppercase">Seu código</span><p class="text-lg font-mono font-bold text-purple-600" x-text="user&&user.codigo"></p></div>
         <div class="grid grid-cols-3 gap-2 text-center"><div class="bg-blue-50 border p-3 rounded-2xl"><span class="text-[10px] font-bold text-blue-800 uppercase">Cliques</span><p class="text-lg font-bold text-blue-600" x-text="af.cliques"></p></div><div class="bg-amber-50 border p-3 rounded-2xl"><span class="text-[10px] font-bold text-amber-800 uppercase">Vendas</span><p class="text-lg font-bold text-amber-600" x-text="af.vendas"></p></div><div class="bg-emerald-50 border p-3 rounded-2xl"><span class="text-[10px] font-bold text-emerald-800 uppercase">Ganhos</span><p class="text-lg font-bold text-emerald-600" x-text="brl(af.comissao)"></p></div></div>
+        <p x-show="af.bloqueado" class="text-red-600 text-xs font-bold">Seu perfil de afiliado está bloqueado: novas vendas não geram comissão.</p>
         <p class="text-xs text-gray-600">Você ganha <b x-text="af.pct+'%'"></b> sobre cada venda feita pelo seu link. Aer confirmar: <b x-text="brl(af.pendente)"></b></p>
         <div class="flex gap-2"><input readonly :value="user?location.origin+'?ref='+user.codigo:''" class="w-full p-2.5 border rounded-xl font-mono"><button @click="copiar(location.origin+'?ref='+user.codigo)" class="px-4 bg-gray-900 text-white font-bold rounded-xl">Copiar</button></div>
+      </div>
+      <!-- afiliados (admin) -->
+      <div x-show="user&&user.admin&&aba==='afiliados'" class="space-y-3">
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-blue-50 border p-2 rounded-2xl"><span class="text-[10px] font-bold text-blue-800 uppercase">Afiliados</span><p class="text-base font-bold text-blue-600" x-text="afs.length"></p></div>
+          <div class="bg-purple-50 border p-2 rounded-2xl"><span class="text-[10px] font-bold text-purple-800 uppercase">Cliques</span><p class="text-base font-bold text-purple-600" x-text="tot('cliques')"></p></div>
+          <div class="bg-amber-50 border p-2 rounded-2xl"><span class="text-[10px] font-bold text-amber-800 uppercase">Vendas</span><p class="text-base font-bold text-amber-600" x-text="tot('vendas')"></p></div>
+          <div class="bg-emerald-50 border p-2 rounded-2xl col-span-2"><span class="text-[10px] font-bold text-emerald-800 uppercase">Comissões a pagar</span><p class="text-base font-bold text-emerald-600" x-text="brl(tot('ganhos'))"></p></div>
+          <div class="bg-gray-50 border p-2 rounded-2xl"><span class="text-[10px] font-bold text-gray-600 uppercase">A confirmar</span><p class="text-base font-bold text-gray-700" x-text="brl(tot('pendente'))"></p></div>
+        </div>
+        <input x-model="busca" placeholder="Buscar nome, e-mail ou código" class="w-full p-2 border rounded-xl">
+        <template x-for="a in afsFiltrados()" :key="a.id">
+          <div class="border rounded-2xl p-3 space-y-2" :class="a.bloqueado?'bg-red-50 border-red-200':''">
+            <div class="flex justify-between items-start gap-2">
+              <div class="min-w-0"><p class="font-bold truncate" x-text="a.nome"></p><p class="text-gray-500 truncate" x-text="a.email"></p><p class="font-mono text-purple-600" x-text="a.codigo"></p></div>
+              <button @click="bloquear(a)" :class="a.bloqueado?'bg-emerald-600':'bg-red-600'" class="px-3 py-1.5 text-white font-bold rounded-lg whitespace-nowrap" x-text="a.bloqueado?'Desbloquear':'Bloquear'"></button>
+            </div>
+            <div class="grid grid-cols-4 gap-1 text-center text-[11px]">
+              <div><b x-text="a.cliques"></b><br>cliques</div><div><b x-text="a.vendas"></b><br>vendas</div><div><b x-text="brl(a.ganhos)"></b><br>ganhos</div><div><b x-text="brl(a.pendente)"></b><br>a confirmar</div>
+            </div>
+            <p x-show="a.bloqueado" class="text-red-600 font-bold">Bloqueado: não recebe comissões.</p>
+          </div>
+        </template>
+        <p x-show="!afs.length" class="text-gray-400 text-center py-6">Nenhum afiliado ainda.</p>
       </div>
       <!-- produtos (admin) -->
       <div x-show="user&&user.admin&&aba==='produtos'" class="space-y-2">
@@ -341,12 +367,12 @@ const API='https://dridalia-api.bmlimp8.workers.dev/api/';
 function loja(){return{
   cfg:{nomeLoja:'Dridalia Moda Feminina',logo:'',banner:'',popupAtivo:false,popupTag:'',popupTitulo:'',popupTexto:'',popupImagem:'',popupProdutoId:null,bumpProdutoId:null,bumpPreco:0},
   produtos:[],paginas:[],user:null,carregando:true,
-  menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,ocupado:false,share:null,falando:null,vozChat:false,faqEd:null,chat:{p:null,txt:'',msgs:[]},
+  menu:false,pag:null,conta:false,carrinho:false,popup:true,modo:'login',aba:'afiliado',erro:'',pagando:false,ocupado:false,share:null,falando:null,afs:[],busca:'',vozChat:false,faqEd:null,chat:{p:null,txt:'',msgs:[]},
   f:{nome:'',email:'',senha:''},itens:[],frete:0,opcoes:[],freteSel:null,calculando:false,freteErro:'',
   end:{nome:'',email:'',cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''},
   pf:{id:null,nome:'',preco:null,descricao:'',tamanhos:'P,M,G,GG',cores:'',imagens:['','','','','']},
   nf:{titulo:'',imagem:'',descricao:'',link:''},
-  af:{cliques:0,vendas:0,comissao:0,pendente:0,pct:0},
+  af:{cliques:0,vendas:0,comissao:0,pendente:0,pct:0,bloqueado:false},
   aj:{mpPublicKey:'',mpToken:'',mpTokenOk:false,freteEmpresa:'superfrete',freteToken:'',freteTokenOk:false,comissaoPct:0,pacote:{altura:8,largura:20,comprimento:28,peso:0.6},regras:[],nr:{cidade:'',uf:'',valor:null},enderecoLoja:{cep:'',rua:'',numero:'',bairro:'',cidade:'',uf:''}},
   politicas:[
     {titulo:'Política de Privacidade',descricao:'Respeitamos a sua privacidade e usamos seus dados apenas para processar pedidos e atendimento.'},
@@ -415,6 +441,11 @@ function loja(){return{
   promo(){return this.produtos.find(x=>x.id==this.cfg.popupProdutoId)},
   async promover(p){if(!confirm('Mostrar "'+p.nome+'" no pop-up de promoção?'))return;
     try{await this.api('config','POST',{popupProdutoId:p.id,popupAtivo:true});this.cfg.popupProdutoId=p.id;this.cfg.popupAtivo=true;this.popup=true}catch(e){alert(e.message)}},
+  async carregarAfs(){try{this.afs=(await this.api('afiliados')).afiliados}catch(e){alert(e.message)}},
+  afsFiltrados(){const q=(this.busca||'').toLowerCase();return this.afs.filter(a=>!q||[a.nome,a.email,a.codigo].some(v=>(v||'').toLowerCase().includes(q)))},
+  tot(k){return this.afs.reduce((s,x)=>s+Number(x[k]||0),0)},
+  async bloquear(a){if(!confirm((a.bloqueado?'Desbloquear ':'Bloquear ')+a.nome+'?'))return;
+    try{await this.api('afiliados/bloquear','POST',{id:a.id,bloqueado:!a.bloqueado});a.bloqueado=a.bloqueado?0:1}catch(e){alert(e.message)}},
   bump(){return this.produtos.find(x=>x.id==this.cfg.bumpProdutoId)},
   bumpPreco(){const b=this.bump(),p=Number(this.cfg.bumpPreco);return b?(p>0&&p<b.preco?p:b.preco):0},
   addBump(){const b=this.bump();if(!b)return;this.itens.push({id:b.id,nome:b.nome+' (oferta)',preco:this.bumpPreco(),img:(b.imagens||[])[0],cor:(b.cores||[])[0]||'Padrão',tam:(b.tamanhos||[])[0]||'Único',qtd:1,bump:true});this.salvarCar()},
